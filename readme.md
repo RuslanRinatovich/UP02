@@ -8,7 +8,7 @@
   <tr>
     <td style="text-align: center; border: none; height: 45em;">
         <h2>
-            Курс занятия по УП 02
+            Курс занятий по УП 02
         </h2>
     </td>
   </tr>
@@ -22,7 +22,7 @@
   </tr>
   <tr>
     <td style="text-align: center; border: none; height: 1em;">
-        г.Зеленодольсе, 2024
+        г.Зеленодольск, 2024
     </td>
   </tr>
 </table>
@@ -34,4 +34,5 @@
 ### 
 [Учетные данные 215 Группа](215.md)
 
-1. [Урок 1. Создание БД. Импорт данных и Словарь данных](Lesson1.md)
+1. [Занятие 1.](Lesson1.md)
+2. [Занятие 2.](Lesson2.md)
