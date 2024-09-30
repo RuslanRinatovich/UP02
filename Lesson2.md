@@ -51,15 +51,18 @@ Language - **Java**, Build system - **Maven**,  Group - **ru.demo**. В каче
 
 1. Выделите слева в окне файл HelloApplication.java. Нажмите правой кнопкой мыши и в контекстном меню выберите пункт Refactor/Rename.
 ![img.png](Lesson2Images/img_4.png)
-2. В откурывшемся окне в поле названия проекта вместо HelloApplication напишите TradeApp  и нажмите на кнопку Refactor.
+2. В открывшемся окне в поле названия проекта вместо HelloApplication напишите TradeApp  и нажмите на кнопку Refactor.
 ![img_1.png](Lesson2Images/img_5.png)
 3. Аналогичным образом переименуйте файлы HelloController в LoginController, а файл hello-view.fxml в login-view.fxml.
 
 ![img_7.png](Lesson2Images/img_7.png)
+
 4. Откройте pom.xml файл 
+
 ![img_8.png](Lesson2Images/img_8.png)
 
 5. замените его код на следующий.
+
 ### pom.xml
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -176,10 +179,12 @@ Language - **Java**, Build system - **Maven**,  Group - **ru.demo**. В каче
 ```
 
 6. Далее справа нажмите на кнопку M
+
 ![img_9.png](Lesson2Images/img_9.png)
 7. Далее в новом окошке нажмите на кнопку Reload All Maven Projects. Это нужно для того чтобы скачать пакеты в ваш проект.
 ![img_10.png](Lesson2Images/img_10.png)
-8. Добавьте в корень вашего проекта файл checkstyle.xml(этот фвайл позволит автоматически проверять codestyle проекта) и suppressions.xml со следующим содержимым
+
+8. Добавьте в корень вашего проекта файл checkstyle.xml(этот файл позволит автоматически проверять codestyle проекта) и suppressions.xml со следующим содержимым
 
 ![img_11.png](Lesson2Images/img_11.png)
 ### checkstyle.xml
@@ -449,8 +454,11 @@ Language - **Java**, Build system - **Maven**,  Group - **ru.demo**. В каче
 
 ## Настройка подключения к БД
 1. Добавьте в папку resourses файл ```hibernate.cfg.xml```
+
 ![img_12.png](Lesson2Images/img_12.png)
+
 добавьте в него следующий код
+
 ### hibernate.cfg.xml
 ```xml
 <?xml version = "1.0" encoding = "utf-8"?>
@@ -482,18 +490,26 @@ Language - **Java**, Build system - **Maven**,  Group - **ru.demo**. В каче
 2. Добавим в пакет ru.demo.tradeapp пакет controllers. Для этого нажмите правой кнопкой мыши по пакету  ru.demo.tradeapp. Далее в контекстном меню выберите New/Package
 ![img_14.png](Lesson2Images/img_14.png)
 3. Укажите название пакета controllers  и нажмите Enter.
+
 ![img_15.png](Lesson2Images/img_15.png)
 4. Аналогичным образом добавьте езе два пакета models и util.
+
 ![img_13.png](Lesson2Images/img_13.png)
 5. Простым перетаскиванием(выделите файл и удерживая левой кнопкой мыши) переместите файл LoginController.java в пакет controllers.
+
 ![img_16.png](Lesson2Images/img_16.png)
 6. Подтвердите перемещение нажав на кнопку **Refactor**
+
 ![img_17.png](Lesson2Images/img_17.png)
 Должна получиться вот такая структура файлов
+
 ![img_18.png](Lesson2Images/img_18.png)
 7. Откройте файл module-info.java.
+
 ![img_19.png](Lesson2Images/img_19.png)
+
 8. Замените содержимое файла на следующий код
+
 ### module-info.java
 ```java
 module ru.trade.tradeapp {
@@ -512,8 +528,11 @@ module ru.trade.tradeapp {
 }
 ```
 9. Добавьте в папку resources файл base-styles.css
+
 ![img_20.png](Lesson2Images/img_20.png)
+
 10. Добавьте в него следующий программный код.
+
 ### base-styles.css
 ```css
 .root {
@@ -560,9 +579,12 @@ module ru.trade.tradeapp {
 }
 ```
 11. Добавьте в папку ru.demo.tradeapp, которая располагается в папке resources две картинки
+
 ![pen.png](Lesson2Images/pen.png) ![picture.png](Lesson2Images/picture.png)
 ![img_21.png](Lesson2Images/img_21.png)
+
 12. В пакет models добавьте класс User
+
 ### User.java
 ```java
 package ru.demo.tradeapp.models;
@@ -651,6 +673,7 @@ public class User {
 ```
 
 13. Добавьте в пакет util следующие классы.
+
 ### класс HibernateSessionFactoryUtil.java
 ```java
 package ru.demo.tradeapp.util;
@@ -682,6 +705,7 @@ public static SessionFactory getSessionFactory() {
 ```
 
 ### класс MakeCaptcha.java
+
 ```java
 package ru.demo.tradeapp.util;
 
