@@ -32,6 +32,7 @@
 # Содержание
 
 ### 
+[Руководство по стилю SQL · SQL Style Guide](https://www.sqlstyle.guide/ru/)<br/>
 [Учетные данные 215 Группа](215.md)
 
 1. [Занятие 1.](Lesson1.md)
