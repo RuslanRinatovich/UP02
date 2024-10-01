@@ -22,7 +22,7 @@
 5. [package controllers]()
    * [LoginController.java](#logincontrollerjava)
    * [MainWindowController.java](#mainwindowcontrollerjava)
-6. [package resources.ru.trade.tradeapp]()
+6. [package resources.ru.demo.tradeapp]()
    * [login-view.fxml](#login-viewfxml)
    * [main-view.fxml](#main-viewfxml)
 7. [Файл TradeApp.java](#tradeappjava)
@@ -512,7 +512,7 @@ Language - **Java**, Build system - **Maven**,  Group - **ru.demo**. В каче
 
 ### module-info.java
 ```java
-module ru.trade.tradeapp {
+module ru.demo.tradeapp {
     requires javafx.controls;
     requires javafx.fxml;
     requires jakarta.persistence;
@@ -680,7 +680,7 @@ package ru.demo.tradeapp.util;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
-import ru.trade.tradeapp.models.User;
+import ru.demo.tradeapp.models.User;
 
 public class HibernateSessionFactoryUtil {
 
@@ -802,7 +802,7 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
-import ru.trade.tradeapp.models.User;
+import ru.demo.tradeapp.models.User;
 
 import java.util.Optional;
 
