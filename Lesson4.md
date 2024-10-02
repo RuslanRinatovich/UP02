@@ -479,6 +479,7 @@ public class Product {
 </AnchorPane>
 
 ```
+![img_2.png](Lesson4Images/img_12.png)
 
 2. В папке с ресурсами создайте новый файл products-table-view.fxml добавьте в него этот код.
 ### products-table-view.fxml
@@ -537,6 +538,7 @@ public class Product {
 </AnchorPane>
 
 ```
+![img_1.png](Lesson4Images/img_11.png)
 
 3В папке с ресурсами создайте новый файл product-edit-view.fxml добавьте в него этот код.
 ### product-edit-view.fxml
@@ -629,6 +631,7 @@ public class Product {
 </AnchorPane>
 
 ```
+![img_3.png](Lesson4Images/img_13.png)
 
 ## Создание контроллеров
 1. в папке откройте файл MainWindowController. Замените его код на следующий
