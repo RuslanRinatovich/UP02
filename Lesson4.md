@@ -1321,7 +1321,7 @@ public class ProductEditViewController implements Initializable {
 ```
 
 4. Из пакета util откройте файл Manager и замените код
-![img.png](img.png)
+![img.png](Lesson4Images/img.png)
 
 ### Manager.java
 ```java
@@ -1384,7 +1384,7 @@ public class Manager {
 ```
 
 5. Откройте файл module-info.java замените в нем код
-![img_1.png](img_1.png)
+![img_1.png](Lesson4Images/img_1.png)
 ### module-info.java
 ```java
 module ru.trade.tradeapp {
@@ -1409,9 +1409,9 @@ module ru.trade.tradeapp {
 
 # Запуск приложения
 1. Запуcтите приложение. Введите учетные данные, например логин: ```maia``` , пароль: ```1```.
-![img_2.png](img_2.png)
+![img_2.png](Lesson4Images/img_2.png)
 2. Просмотрите работу приложения.
-![img_3.png](img_3.png)
+![img_3.png](Lesson4Images/img_3.png)
 
 
 # Задания
