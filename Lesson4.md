@@ -3,26 +3,151 @@
 [Урок 3](Lesson3.md) | [Содержание](readme.md) | [Урок 5](Lesson5.md)
 
 # Урок 4. CRUD товары
-
-1. [Добавление и изменение сущностей](#добавление-и-изменение-сущностей)
+1. [Добавление нового артефакта](#добавление-нового-артефакта)
+   * [pom.xml](#pomxml)
+2. [Добавление и изменение сущностей](#добавление-и-изменение-сущностей)
    * [Order](#класс-order-)
    * [OrderProduct](#класс-orderproduct-)
    * [OrderProductId](#класс-orderproductid-)
    * [Product](#класс-product)
-2. [Создание макета каталога товаров](#создание-макета-каталога-товаров)
+3. [Создание макета каталога товаров](#создание-макета-каталога-товаров)
    * [main-view.fxml](#main-viewfxml)
    * [products-table-view.fxml](#products-table-viewfxml)
    * [products-edit-view.fxml](#products-edit-viewfxml)
-3. [Создание контроллеров](#создание-контроллеров)
+4. [Создание контроллеров](#создание-контроллеров)
    * [MainWindowController](#класс-mainwindowcontroller)
    * [ProductTableViewController](#класс-producttableviewcontroller)
    * [ProductEditViewController](#класс-producteditviewcontroller)
    * [Manager](#managerjava)
    * [module-info.java](#module-infojava)
-4. [Запуск приложения](#запуск-приложения)
-5. [Задания](#задания)
+   * [LoginController](#класс-logincontrollerjava)
+5. [Запуск приложения](#запуск-приложения)
+6. [Задания](#задания)
+
+## Добавление нового артефакта
+1. Откройте файл pom.xml и замените его содержимое.
+### pom.xml
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>ru.trade</groupId>
+    <artifactId>trade-app</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>trade-app</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.9.2</junit.version>
+    </properties>
+
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.gluonhq/charm-glisten -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>8.0.1.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>6.2.7.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>21-ea+24</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>13.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>21-ea+24</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>22</source>
+                    <target>22</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <executions>
+                    <execution>
+                        <!-- Default configuration for running with: mvn clean javafx:run -->
+                        <id>default-cli</id>
+                        <configuration>
+                            <mainClass>ru.trade.tradeapp/ru.trade.tradeapp.TradeApp</mainClass>
+                            <launcher>app</launcher>
+                            <jlinkZipName>app</jlinkZipName>
+                            <jlinkImageName>app</jlinkImageName>
+                            <noManPages>true</noManPages>
+                            <stripDebug>true</stripDebug>
+                            <noHeaderFiles>true</noHeaderFiles>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <failOnViolation>true</failOnViolation>
+                    <logViolationsToConsole>true</logViolationsToConsole>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>compile</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
 
 ## Добавление и изменение сущностей
+
 
 1. В папке models создайте следующие классы
 
@@ -1406,6 +1531,193 @@ module ru.trade.tradeapp {
     exports ru.demo.tradeapp.controller;
     opens ru.demo.tradeapp.controller to javafx.fxml;
     opens ru.demo.tradeapp.util to org.hibernate.orm.core;
+}
+```
+
+6. Откройте файл LoginController.java и замените в нем код
+### класс LoginController.java
+```java
+package ru.demo.tradeapp.controller;
+
+import jakarta.persistence.Query;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.RowConstraints;
+import javafx.stage.Stage;
+import org.hibernate.Session;
+import ru.demo.tradeapp.TradeApp;
+import ru.demo.tradeapp.model.User;
+import ru.demo.tradeapp.util.HibernateSessionFactoryUtil;
+import ru.demo.tradeapp.util.MakeCaptcha;
+import ru.demo.tradeapp.util.Manager;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
+
+import static ru.demo.tradeapp.util.Manager.ShowErrorMessageBox;
+
+public class LoginController implements Initializable {
+
+    boolean isWrongCaptha;
+    boolean isShowCaptha;
+    String captchaCode;
+    int secondsLeft;
+    @FXML
+    RowConstraints ThirdRow;
+    @FXML
+    Button BtnRenewCaptcha;
+    @FXML
+    private Button BtnCancel;
+    @FXML
+    private Button BtnOk;
+    @FXML
+    private PasswordField PasswordField;
+    @FXML
+    private TextField TextFieldUsername;
+    @FXML
+    private TextField TextFieldCaptcha;
+    @FXML
+    private ImageView ImageViewCaptcha;
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        initController();
+    }
+
+    @FXML
+    void BtnRenewCaptchaAction(ActionEvent event) {
+        generateCaptcha();
+    }
+
+    @FXML
+    void BtnCancelAction(ActionEvent event) {
+        Manager.ShowPopup();
+    }
+
+    @FXML
+    void BtnOkActon(ActionEvent event) {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            Query query = session.createQuery("from User", User.class);
+            List<User> users = query.getResultList();
+            Optional<User> person = users.stream().filter(user -> user.getUsername().equals(TextFieldUsername.getText()) &&
+                    user.getPassword().equals(PasswordField.getText())).findFirst();
+
+            if (person.isEmpty() && isShowCaptha && !TextFieldCaptcha.getText().equals(captchaCode)) {
+                System.out.println("Bad error");
+                ShowErrorMessageBox("Не верный логин, пароль или текст капчи");
+                blockButtons();
+                return;
+            }
+            if (person.isEmpty() && (!isShowCaptha)) {
+                System.out.println("Bad error");
+                generateCaptcha();
+                isShowCaptha = true;
+                ThirdRow.setPrefHeight(50);
+                ImageViewCaptcha.setVisible(true);
+                TextFieldCaptcha.setVisible(true);
+                BtnRenewCaptcha.setVisible(true);
+                ShowErrorMessageBox("Не верный логин или пароль");
+                return;
+            }
+            if (person.isPresent() && isShowCaptha && !TextFieldCaptcha.getText().equals(captchaCode)) {
+                blockButtons();
+                ShowErrorMessageBox("Не верный логин, пароль или текст капчи");
+                return;
+            }
+
+            if (person.isPresent() && isShowCaptha && TextFieldCaptcha.getText().equals(captchaCode)) {
+                showMainWindow(person.get());
+                return;
+            }
+
+            if (person.isPresent() && !isShowCaptha) {
+                showMainWindow(person.get());
+            }
+        }
+    }
+
+    public void generateCaptcha() {
+        try {
+            ImageViewCaptcha.setImage(MakeCaptcha.CreateImage(150, 40, 4));
+            captchaCode = MakeCaptcha.captchaCode();
+            System.out.println(captchaCode);
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+
+    public void showMainWindow(User person) {
+        Manager.currentUser = person;
+        System.out.println(Manager.currentUser);
+        Manager.mainStage.hide();
+        Stage newWindow = new Stage();
+        FXMLLoader fxmlLoader = new FXMLLoader(TradeApp.class.getResource("main-view.fxml"));
+
+        Scene scene = null;
+        try {
+            scene = new Scene(fxmlLoader.load());
+            scene.getStylesheets().add("base-styles.css");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        newWindow.setTitle("Вы вошли как " + Manager.currentUser.getFirstName());
+        newWindow.setScene(scene);
+        newWindow.setOnCloseRequest(e -> {
+            Manager.mainStage.show();
+        });
+        Manager.secondStage = newWindow;
+
+        newWindow.show();
+    }
+
+    public void initTimer() {
+        TimerTask task = new TimerTask() {
+            public void run() {
+                System.out.println("Task performed on: " + new Date() + "n" +
+                        "Thread's name: " + Thread.currentThread().getName());
+                secondsLeft--;
+                if (secondsLeft == 0) ;
+                {
+                    BtnOk.setDisable(false);
+                    BtnCancel.setDisable(false);
+                    this.cancel();
+                }
+            }
+        };
+        Timer timer = new Timer("Timer");
+
+        long delay = 10000L;
+        timer.schedule(task, delay);
+    }
+
+    public void blockButtons() {
+        initTimer();
+        secondsLeft = 10;
+        BtnOk.setDisable(true);
+        BtnCancel.setDisable(true);
+    }
+
+    public void initController() {
+        ThirdRow.setPrefHeight(0);
+        TextFieldUsername.setText("maia");
+        PasswordField.setText("1");
+        TextFieldCaptcha.setVisible(false);
+        BtnRenewCaptcha.setVisible(false);
+        ImageViewCaptcha.setVisible(false);
+        isWrongCaptha = false;
+        isShowCaptha = false;
+        captchaCode = "";
+        secondsLeft = 0;
+    }
 }
 ```
 
