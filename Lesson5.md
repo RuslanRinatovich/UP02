@@ -19,7 +19,7 @@
    * [Unittype](#класс-unittype-)
    * [User](#класс-user-)
    * [hibernate.cfg.xml](#hibernatecfgxml)
-3. [Создание макета каталога товаров](#создание-макета-каталога-товаров)
+3. [Создание макета каталога товаров](#создание-и-изменение-существующих-макетов)
    * [main-view.fxml](#main-viewfxml)
    * [login-view.fxml](#login-viewfxml)
    * [category-table-view.fxml](#category-table-viewfxml)
@@ -28,7 +28,7 @@
    * [product-edit-view.fxml](#product-edit-viewfxml)
    * [productcell-view.fxml](#productcell-viewfxml)
    * [products-table-view.fxml](#products-table-viewfxml)
-4. [Создание контроллеров](#создание-контроллеров)
+4. [Создание и изменение существующих контроллеров](#создание-и-изменение-существующих-контроллеров)
    * [LoginController](#класс-logincontroller)
    * [MainWindowController](#класс-mainwindowcontroller)
    * [ListCellController](#класс-listcellcontroller)
@@ -198,6 +198,7 @@
 
 1. В папке models создайте и замените следующие классы
 
+![img.png](Lesson5Images/img.png)
 ### класс Category
 ```java
 package ru.demo.tradeapp.model;
@@ -1272,7 +1273,7 @@ public class User {
 ## Создание и изменение существующих макетов
 
 1.  Создайте или замените код существующих файлов
-
+![img_1.png](Lesson5Images/img_1.png)
 ### main-view.fxml
 ```fxml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -2038,8 +2039,12 @@ public class User {
 ```
 
 
-## Создание контроллеров
+## Создание и изменение существующих контроллеров
+
+
 1. Добавьте классы контроллеров или замените код существующих
+![img_2.png](Lesson5Images/img_2.png)
+
 ### Класс LoginController
 ```java
 package ru.demo.tradeapp.controller;
@@ -3558,7 +3563,8 @@ public class ProductTableViewController implements Initializable {
 ```
 
 ## Пакет util
-
+1. Добавьте или измените код существующих классов
+![img_3.png](Lesson5Images/img_3.png)
 ### Manager.java
 ```java
 package ru.demo.tradeapp.util;
@@ -3835,7 +3841,8 @@ public class Item {
 ```
 
 ## Добавление репозиториев
-1. Добавьте или измените классы сервисов из папки repository
+1. Добавьте или измените классы из папки repository
+![img_4.png](Lesson5Images/img_4.png)
 ### Класс BaseDao
 ```java
 package ru.demo.tradeapp.repository;
@@ -4045,7 +4052,7 @@ public class RoleDao extends BaseDao<Role> {
 
 ## Добавление сервисов
 1. Добавьте или измените классы сервисов из папки service
-
+![img_5.png](Lesson5Images/img_5.png)
 ### класс CategoryService
 ```java
 package ru.demo.tradeapp.service;
@@ -4607,9 +4614,15 @@ public class UserService {
 
 # Запуск приложения
 1. Запуcтите приложение. Введите учетные данные, например логин: ```maia``` , пароль: ```1```.
-![img_2.png](Lesson4Images/img_2.png)
-2. Просмотрите работу приложения.
-![img_3.png](Lesson4Images/img_3.png)
+![img_6.png](Lesson5Images/img_6.png)
+2. Просмотрите работу приложения. На данном этапе в черновом виде реализованы:
+   - добавление товаров в корзину
+   - просмотр корзины
+   - удаление товара из корзины
+   - изменены интерфейс и стили приложения
+   - добавлен просмотр списка категории товаров
+
+
 
 
 # Задания
