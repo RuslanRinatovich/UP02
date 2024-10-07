@@ -18,17 +18,28 @@
    * [Supllier](#класс-supllier)
    * [Unittype](#класс-unittype-)
    * [User](#класс-user-)
+   * [hibernate.cfg.xml](#hibernatecfgxml)
 3. [Создание макета каталога товаров](#создание-макета-каталога-товаров)
    * [main-view.fxml](#main-viewfxml)
+   * [login-view.fxml](#login-viewfxml)
+   * [category-table-view.fxml](#category-table-viewfxml)
+   * [order-view.fxml](#order-viewfxml)
+   * [ordercell-view.fxml](#ordercell-viewfxml)
+   * [product-edit-view.fxml](#product-edit-viewfxml)
+   * [productcell-view.fxml](#productcell-viewfxml)
    * [products-table-view.fxml](#products-table-viewfxml)
-   * [products-edit-view.fxml](#products-edit-viewfxml)
 4. [Создание контроллеров](#создание-контроллеров)
+   * [LoginController](#класс-logincontroller)
    * [MainWindowController](#класс-mainwindowcontroller)
-   * [ProductTableViewController](#класс-producttableviewcontroller)
+   * [ListCellController](#класс-listcellcontroller)
+   * [CategoryTableViewController](#класс-categorytableviewcontroller)
+   * [OrderCell](#класс-ordercell)
+   * [OrderCellController](#класс-ordercellcontroller)
+   * [OrderViewController](#класс-orderviewcontroller)
+   * [ProductCell](#класс-productcell)
    * [ProductEditViewController](#класс-producteditviewcontroller)
-   * [Manager](#managerjava)
-   * [module-info.java](#module-infojava)
-   * [LoginController](#класс-logincontrollerjava)
+   * [ProductTableViewController](#класс-producttableviewcontroller)
+
 5. [Запуск приложения](#запуск-приложения)
 6. [Задания](#задания)
 
@@ -1194,6 +1205,7 @@ public class User {
 ```
 
 4. Измените содержимое файла hibernate.cfg.xml(Мы добавили mapping на новые добавленные классы)
+### hibernate.cfg.xml
 ```xml
 <?xml version = "1.0" encoding = "utf-8"?>
 <!DOCTYPE hibernate-configuration PUBLIC
