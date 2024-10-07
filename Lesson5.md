@@ -39,9 +39,14 @@
    * [ProductCell](#класс-productcell)
    * [ProductEditViewController](#класс-producteditviewcontroller)
    * [ProductTableViewController](#класс-producttableviewcontroller)
-
-5. [Запуск приложения](#запуск-приложения)
-6. [Задания](#задания)
+5. [Пакет util](#пакет-util)
+   * [Manager](#managerjava)
+   * [Basket](#класс-basket)
+   * [Item](#класс-item)
+6. [Добавление репозиториев](#добавление-репозиториев)
+7. [Добавление сервисов](#добавление-сервисов)
+8. [Запуск приложения](#запуск-приложения)
+9. [Задания](#задания)
 
 ## Добавление нового артефакта
 1. Откройте файл pom.xml и замените его содержимое.
@@ -3529,8 +3534,7 @@ public class ProductTableViewController implements Initializable {
 
 ```
 
-4. Из пакета util откройте файл Manager и замените код
-![img.png](Lesson4Images/img.png)
+## Пакет util
 
 ### Manager.java
 ```java
@@ -3807,8 +3811,8 @@ public class Item {
 }
 ```
 
-## Добавление сервисов
-1. Добавьте или измените классы сервисов из папки service
+## Добавление репозиториев
+1. Добавьте или измените классы сервисов из папки repository
 ### Класс BaseDao
 ```java
 package ru.demo.tradeapp.repository;
