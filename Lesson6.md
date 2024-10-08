@@ -2685,7 +2685,7 @@ public class Manager {
             Font font = FontFactory.getFont(FONT, "cp1251", BaseFont.EMBEDDED, 10);
             document.open();
             document.add(new Paragraph("Заказ №: " + order.getOrderId(), font));
-            if (currentUser != null)
+            if (order.getUser() != null)
                 document.add(new Paragraph("на имя " + order.getUser().getSecondName() + " " + order.getUser().getFirstName(), font));
             document.add(new Paragraph("Дата заказа: " + order.getCreateDate(), font));
             document.add(new Paragraph("Дата получения заказа: " + order.getDeliveryDate(), font));
