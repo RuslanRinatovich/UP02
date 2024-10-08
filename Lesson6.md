@@ -5,6 +5,7 @@
 # Урок 6. Реализация работы с корзиной, сохранение заказа, просмотр и печать заказов.
 1. [Добавление нового артефакта](#добавление-нового-артефакта)
    * [pom.xml](#pomxml)
+   * [module-info.java](#module-infojava)
 2. [Добавление и изменение сущностей](#добавление-и-изменение-сущностей)
    * [Category](#класс-category)
    * [Manufacturer](#класс-manufacturer)
@@ -37,9 +38,11 @@
    * [OrderDao](#класс-orderdao)
    * [OrderProductDao](#класс-orderproductdao)
    * [ProductDao](#класс-productdao)
-7. [Добавление файла шрифта](#файл-шрифта-arialttf)
-8. [Запуск приложения](#запуск-приложения)
-9. [Задания](#задания)
+7. [Изменение сервисов](#изменение-сервисов)
+   * [OrderProductService](#класс-orderproductservice)
+8. [Добавление файла шрифта](#файл-шрифта-arialttf)
+9. [Запуск приложения](#запуск-приложения)
+10. [Задания](#задания)
 
 ## Добавление нового артефакта
 1. Откройте файл pom.xml и замените его содержимое.
@@ -168,6 +171,29 @@
 </project>
 ```
 
+2. Откройте файл module-info.java и замените его содержимое
+
+### module-info.java
+```java
+module ru.trade.tradeapp {
+    requires javafx.controls;
+    requires javafx.fxml;
+    requires jakarta.persistence;
+    requires org.hibernate.orm.core;
+    requires java.naming;
+    requires java.desktop;
+    requires javafx.swing;
+    requires org.hibernate.validator;
+    requires org.postgresql.jdbc;
+    requires itextpdf;
+    opens ru.demo.tradeapp to javafx.fxml;
+    opens ru.demo.tradeapp.model to org.hibernate.orm.core, javafx.base;
+    exports ru.demo.tradeapp;
+    exports ru.demo.tradeapp.controller;
+    opens ru.demo.tradeapp.controller to javafx.fxml;
+    opens ru.demo.tradeapp.util to org.hibernate.orm.core;
+}
+```
 ## Добавление и изменение сущностей
 
 
@@ -2892,6 +2918,64 @@ public class ProductDao extends BaseDao<Product> {
     }
     public Product findOne(final String id) {
         return getCurrentSession().get(Product.class, id);
+    }
+}
+
+```
+
+## Изменение сервисов
+1. Откройте файл OrderProductService и замените его содержимое
+### класс OrderProductService
+```java
+package ru.demo.tradeapp.service;
+
+import ru.demo.tradeapp.model.OrderProduct;
+import ru.demo.tradeapp.repository.OrderProductDao;
+
+import java.util.List;
+
+public class OrderProductService {
+    private OrderProductDao orderProductDao = new OrderProductDao();
+
+    public OrderProductService() {
+    }
+
+    public List<OrderProduct> findAll() {
+        return orderProductDao.findAll();
+    }
+
+    public OrderProduct findOne(final long id) {
+        return orderProductDao.findOne(id);
+    }
+
+    public void save(final OrderProduct entity) {
+        if (entity == null)
+            return;
+        orderProductDao.save(entity);
+    }
+
+    public void update(final OrderProduct entity) {
+        if (entity == null)
+            return;
+        orderProductDao.update(entity);
+    }
+
+    public void delete(final OrderProduct entity) {
+        if (entity == null)
+            return;
+        orderProductDao.delete(entity);
+    }
+
+    public void deleteById(final Long id) {
+        if (id == null)
+            return;
+        orderProductDao.deleteById(id);
+    }
+
+    public int getCount(String productId) {
+        if (productId == null)
+            return 0;
+        return orderProductDao.getCount(productId);
     }
 }
 
