@@ -11,7 +11,11 @@
 1. [Работа с pom.xml](#работа-с-pomxml)
    * [pom.xml](#pomxml)
 2. [Добавление репозиториев и папок](#добавление-репозиториев-и-папок)
-3. [Перенос и добавление новых файлов в controller](#перенос-и-добавление-новых-файлов-в-controller)
+<details>
+
+<summary>Перенос и добавление новых файлов в controller </summary>
+
+3. [Перенос и добавление новых файлов в controller](#перенос-и-добавление-новых-файлов-в-controller) 
    * category
      * [CategoryEditViewController](#categoryeditviewcontroller)
      * [CategoryTableViewController](#categorytableviewcontroller)
@@ -49,6 +53,12 @@
       * [UserTableViewController](#usertableviewcontroller)
    * [LoginController](#logincontroller)
    * [MainWindowController](#mainwindowcontroller)
+
+</details>
+
+<details>
+<summary>Добавление и изменение сущностей</summary>
+
 4. [Добавление и изменение сущностей](#добавление-и-изменение-сущностей)
    * [Category](#класс-category)
    * [Manufacturer](#класс-manufacturer)
@@ -63,7 +73,13 @@
    * [Unittype](#класс-unittype-)
    * [User](#класс-user-)
    * [hibernate.cfg.xml](#hibernatecfgxml)
-5. [Добавление и изменение репозиториев](#добавление-репозиториев)
+
+</details>
+<details>
+
+<summary>Добавление и изменение репозиториев</summary>
+
+5. [Добавление и изменение репозиториев](#добавление-и-изменение-репозиториев)
    * [BaseDao](#класс-basedao)
    * [CategoryDao](#класс-categorydao)
    * [ManufacturerDao](#класс-manufacturerdao)
@@ -76,7 +92,15 @@
    * [UnittypeDao](#класс-unittypedao)
    * [UserDao](#класс-userdao)
    * [RoleDao](#класс-roledao)
-6. [Добавление и изменение сервисов](#добавление-сервисов)
+   
+</details>
+<details>
+
+<summary>Добавление и изменение сервисов</summary>
+
+
+
+6. [Добавление и изменение сервисов](#добавление-и-изменение-сервисов)
    * [CategoryService](#класс-categoryservice)
    * [ManufacturerService](#класс-manufacturerservice)
    * [OrderProductService](#класс-orderproductservice)
@@ -88,12 +112,24 @@
    * [SupplierService](#класс-supplierservice)
    * [UnittypeService](#класс-unittypeservice)
    * [UserService](#класс-userservice)
+
+</details>
+<details>
+
+<summary>Пакет util</summary>
+
 7. [Пакет util](#пакет-util)
    * [Manager](#managerjava)
    * [Basket](#класс-basket)
    * [Item](#класс-item)
    * [HibernateSessionFactoryUtil](#класс-hibernatesessionfactoryutil)
    * [MakeCaptcha](#класс-makecaptcha)
+
+</details>
+<details>
+
+<summary>Создание и изменение существующих макетов fxml</summary>
+
 8. [Создание и изменение существующих макетов fxml](#создание-и-изменение-существующих-макетов-fxml)
    * category
      * [category-edit-view.fxml](#category-edit-viewfxml)
@@ -130,12 +166,17 @@
       * [user-table-view.fxml](#user-table-viewfxml)
    * [login-view.fxml](#login-viewfxml)
    * [main-view.fxml](#main-viewfxml)
+
+</details>
+
 9. [Настройка файла module-info.java](#настройка-файла-module-infojava)
 10. [Добавление файла шрифта](#файл-шрифта-arialttf)
 11. [файл стилей base-styles.css](#файл-стилей-base-stylescss)
 12. [Запуск приложения](#запуск-приложения)
 13. [Задания](#задания)
 
+
+---
 
 
 
@@ -262,6 +303,8 @@
 </project>
 ```
 
+---
+
 # Добавление репозиториев и папок
 
 1. Добавьте в репозиторий controller новые репозитории
@@ -290,6 +333,9 @@
    - user
    
    ![img_1.png](Lesson7Images/img_1.png)
+
+---
+
 # Перенос и добавление новых файлов в controller
 1. Создайте или переместите(если они были у вас созданы ранее) в репозиторий category два файла controller
   ![img_2.png](Lesson7Images/img_2.png)
@@ -3937,8 +3983,13 @@ public class MainWindowController implements Initializable {
 }
 
 ```
+
 12. Должно получиться вот такое дерево репозиториев с файлами в репозитории controller
 ![img_13.png](Lesson7Images/img_13.png)
+
+
+
+---
 
 ## Добавление и изменение сущностей
 
@@ -5119,6 +5170,7 @@ public class User {
 
 
 ```
+---
 
 ## Добавление и изменение репозиториев
 1. Добавьте или измените классы из папки repository
@@ -5384,8 +5436,8 @@ public class RoleDao extends BaseDao<Role> {
 }
 
 ```
-
-## Добавление сервисов
+---
+## Добавление и изменение сервисов
 1. Добавьте или измените классы сервисов из папки service
 ![img_5.png](Lesson5Images/img_5.png)
 ### класс CategoryService
@@ -5948,6 +6000,7 @@ public class UserService {
     }
 }
 ```
+---
 
 ## Пакет util
 1. Добавьте или измените код существующих классов
@@ -6461,6 +6514,8 @@ public class MakeCaptcha {
 }
 
 ```
+
+---
 
 ## Создание и изменение существующих макетов fxml
 1. Переместите или создайте в папке resources/ru.demo.tradeapp/category два файла
@@ -8280,6 +8335,7 @@ public class MakeCaptcha {
 </AnchorPane>
 
 ```
+---
 
 ## Настройка файла module-info.java
 1. Перейдите в папку src/main/java и откройте файл module-info.java
@@ -8325,10 +8381,15 @@ public class MakeCaptcha {
     opens ru.demo.tradeapp.controller.pickuppoint to javafx.fxml;
 }
 ```
+---
 
 ### файл шрифта arial.ttf
 1. Добавьте в папку resources подкаталог fonts и поместите туда файл [arial.ttf](Lesson6Images%2Farial.ttf)
 ![img.png](Lesson6Images/img.png)
+
+
+---
+
 
 ### файл стилей base-styles.css
 Откройте файл base-styles.css и измените его содержимое
@@ -8502,6 +8563,7 @@ public class MakeCaptcha {
 
 
 ```
+---
 
 # Запуск приложения
 1. Запуcтите приложение. Введите учетные данные, например логин: ```maia``` , пароль: ```1```.
@@ -8517,6 +8579,9 @@ public class MakeCaptcha {
    1. ('Майя','Высоцкая','Давидовна','maia','1',1) - Логин: ```maia```, пароль: ```1``` (Клиент, role_id = 1)
    2. ('Дамир','Агеев','Давидович','damir','2',2),- Логин: ```damir```, пароль: ```2``` (Админ, role_id = 2)
    3. ('Филипп','Терентьев','Богданович','filip','3',3),- Логин: ```filip```, пароль: ```3``` (Менеджер, role_id = 3)
+
+
+---
 
 
 # Задания
