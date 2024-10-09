@@ -3924,10 +3924,12 @@ public class MainWindowController implements Initializable {
 
     public void loadRole() {
         MenuBarFile.setVisible(false);
-        if (currentUser.getRole().getTitle().equals("Администратор")) {
+        // вход как админ
+        if (currentUser.getRole().getRoleId() == 2) {
             MenuBarFile.setVisible(true);
         }
-        if (currentUser.getRole().getTitle().equals("Менеджер")) {
+        // вход как менеджер
+        if (currentUser.getRole().getRoleId() == 3) {
             MenuBarFile.setVisible(true);
             MenuItemProducts.setVisible(false);
         }
@@ -8512,9 +8514,9 @@ public class MakeCaptcha {
 
 3. Имена для входа и пароли для проверки:
 
-   1. ('Майя','Высоцкая','Давидовна','maia','1',1) - Логин: ```maia```, пароль: ```1``` (Клиент)
-   2. ('Дамир','Агеев','Давидович','damir','2',2),- Логин: ```damir```, пароль: ```2``` (Админ)
-   3. ('Филипп','Терентьев','Богданович','filip','3',3),- Логин: ```filip```, пароль: ```3``` (Менеджер)
+   1. ('Майя','Высоцкая','Давидовна','maia','1',1) - Логин: ```maia```, пароль: ```1``` (Клиент, role_id = 1)
+   2. ('Дамир','Агеев','Давидович','damir','2',2),- Логин: ```damir```, пароль: ```2``` (Админ, role_id = 2)
+   3. ('Филипп','Терентьев','Богданович','filip','3',3),- Логин: ```filip```, пароль: ```3``` (Менеджер, role_id = 3)
 
 
 # Задания
