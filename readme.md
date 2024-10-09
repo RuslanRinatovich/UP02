@@ -34,6 +34,7 @@
 ### 
 [Руководство по стилю SQL · SQL Style Guide](https://www.sqlstyle.guide/ru/)<br/>
 [Учетные данные 215 Группа](215.md)
+[Задание на разработку.pdf](%C7%E0%E4%E0%ED%E8%E5%20%ED%E0%20%F0%E0%E7%F0%E0%E1%EE%F2%EA%F3.pdf)
 
 1. [Занятие 1.](Lesson1.md)
 2. [Занятие 2.](Lesson2.md)
@@ -41,3 +42,4 @@
 4. [Занятие 4.](Lesson4.md)
 5. [Занятие 5.](Lesson5.md)
 6. [Занятие 6.](Lesson6.md)
+7. [Занятие 7.](Lesson7.md)
