@@ -33,8 +33,11 @@
 
 ### 
 [Руководство по стилю SQL · SQL Style Guide](https://www.sqlstyle.guide/ru/)<br/>
+
 [Учетные данные 215 Группа](215.md)
-[Задание на разработку.pdf](%C7%E0%E4%E0%ED%E8%E5%20%ED%E0%20%F0%E0%E7%F0%E0%E1%EE%F2%EA%F3.pdf)
+[Учетные данные 217 Группа](217.pdf)
+
+[Задание на разработку.pdf](taskfordoiing.pdf)
 
 1. [Занятие 1.](Lesson1.md)
 2. [Занятие 2.](Lesson2.md)
