@@ -1227,6 +1227,8 @@ public class TradeApp extends Application {
 ![img_29.png](Lesson2Images/img_29.png)
 
 
+## Задание
+
 Предыдущее занятие | &nbsp; | Следующее занятие
 :----------------:|:----------:|:----------------:
 [Урок 1](Lesson1.md) | [Содержание](readme.md) | [Урок 3](Lesson3.md)
