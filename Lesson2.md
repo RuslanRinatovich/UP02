@@ -63,6 +63,8 @@ Language - **Java**, Build system - **Maven**,  Group - **ru.demo**. В каче
 
 5. замените его код на следующий.
 
+
+
 ### pom.xml
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1259,8 +1261,9 @@ public class TradeApp extends Application {
 - 
    ![img_4.png](img_4.png)
 
+## Пример создания интерфейса 
 
-
+[Видео создания интерфейса и контроллера](https://drive.google.com/file/d/1Ylvi-Z_cEcBFgqlJzGEK3KoMsnIHqKAg/view?usp=drive_link)
 
 
 Предыдущее занятие | &nbsp; | Следующее занятие
