@@ -48,3 +48,5 @@
 6. [Занятие 6.](Lesson6.md)
 7. [Занятие 7.](Lesson7.md)
 8. [Зачетное задание](FinalTask.md)
+
+[Как отправить данные на gogs-server](https://boosty.to/itmagic/posts/bd0fd95c-33e4-4c73-a008-201c3ab59215?share=post_link)
