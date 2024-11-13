@@ -49,4 +49,4 @@
 7. [Занятие 7.](Lesson7.md)
 8. [Зачетное задание](FinalTask.md)
 
-[Как отправить данные на gogs-server](https://boosty.to/itmagic/posts/bd0fd95c-33e4-4c73-a008-201c3ab59215?share=post_link)
+[Как отправить данные на gogs-server](https://drive.google.com/file/d/1dTC3Px5rwt--s7hT8Ei2QXamTh_lJAjU/view?usp=sharing)
