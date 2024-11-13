@@ -50,3 +50,5 @@
 8. [Зачетное задание](FinalTask.md)
 
 [Как отправить данные на gogs-server](https://drive.google.com/file/d/1dTC3Px5rwt--s7hT8Ei2QXamTh_lJAjU/view?usp=sharing)
+
+[Мой аккаунт на boosty](https://boosty.to/itmagic)
