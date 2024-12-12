@@ -40,6 +40,8 @@
 
 [Задание на разработку.pdf](taskfordoiing.pdf)
 
+[Скрипт БД для trade.app](TradeSQlScriptFull.sql)
+
 1. [Занятие 1.](Lesson1.md)
 2. [Занятие 2.](Lesson2.md)
 3. [Занятие 3.](Lesson3.md)
