@@ -49,7 +49,7 @@
 5. [Занятие 5.](Lesson5.md)
 6. [Занятие 6.](Lesson6.md)
 7. [Занятие 7.](Lesson7.md)
-8. [Зачетное задание](FinalTask.md)
+8. [Зачетное задание](VAR2/FINALTASK2.MD)
 
 [ЧТо такое git и с чем его едят?](https://skillbox.ru/media/code/chto_takoe_git_obyasnyaem_na_skhemakh/)
 
