@@ -9,7 +9,7 @@
 Оценка 5 - Разработать приложение согласно макету 
 
 ## Ресурсы для выполнение
-[FINALTASK2.ZIP](FINALTASK2.ZIP)
+[FINALTASK2.ZIP](FINALTASK2.zip)
 
 [Архив с изображениями агентов](agents_import.zip)
 
