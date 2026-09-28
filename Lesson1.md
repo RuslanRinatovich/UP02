@@ -310,7 +310,29 @@ server.port=8080
 spring.application.name=shop
 ```
 
-> ⚠️ **Важно:** `ddl-auto=validate`, а **не** `update`. Схема уже создана скриптом, Hibernate не должен её менять. Если поставить `update`, Hibernate может «дописать» свои колонки и сломать структуру.
+> 💡 **Почему `ddl-auto=validate`, а не `update`**
+>
+> Параметр `spring.jpa.hibernate.ddl-auto` управляет тем, как Hibernate взаимодействует со схемой БД при старте приложения. Возможные значения:
+>
+> | Значение | Что делает | Когда использовать |
+> |----------|-----------|-------------------|
+> | `none` | Ничего не делает | Продакшн, где схема управляется вручную |
+> | `validate` | Проверяет, что таблицы и колонки из Entity совпадают с БД. Если чего-то не хватает — падает с ошибкой | **Наш случай** |
+> | `update` | Дописывает отсутствующие таблицы и колонки, но **не удаляет** лишние | Быстрые прототипы, dev |
+> | `create` | Удаляет схему и создаёт заново при каждом запуске | Тесты |
+> | `create-drop` | То же, что `create`, но удаляет схему при остановке | Тесты |
+>
+> **Почему у нас `validate`:**
+> 1. Схема уже создана SQL-скриптом `ScriptWithData.sql` — мы не хотим, чтобы Hibernate её пересоздавал.
+> 2. `update` — опасен: он может «дописать» свои колонки (например, `id bigserial` вместо вашего `serial4`), переименовать поля или создать дубли, если Entity не точно совпадает с таблицей .
+> 3. `validate` — это «страховка»: если Entity и таблица расходятся, вы сразу увидите ошибку при старте и поймёте, что поправить — Java-класс или SQL-скрипт.
+>
+> Позже, когда мы перейдём к **Entity** и **Spring Data JPA** (урок 2), `validate` поможет нам не сломать существующую БД и явно сопоставить каждое поле.
+>
+> **Где почитать подробнее:**
+> - 🇬🇧 **Baeldung: Hibernate ddl-auto** — все значения с примерами и предупреждениями: [ссылка](https://www.baeldung.com/hibernate-ddl-auto)
+> - 🇬🇧 **Baeldung: Spring Boot + Hibernate ddl-auto** — про `validate` vs `update` в Spring Boot: [ссылка](https://www.baeldung.com/spring-boot-hibernate-ddl-auto)
+> - 🇷🇺 **Хабр: ddl-auto в Spring Boot** — на русском, с примерами ошибок: [ссылка](https://habr.com/ru/articles/) *(поиск: «spring boot ddl-auto validate update»)*
 
 Замените:
 - `demoN` → своя БД (например, `demo5`)
@@ -333,6 +355,31 @@ HikariPool-1 - Start completed.
 Откройте `http://localhost:8080` — должна открыться страница Whitelabel Error Page (это нормально — контроллеров ещё нет).
 
 ### 5.5. Первый REST-контроллер
+
+> 💡 **`@RestController` vs `@Controller` — в чём разница**
+>
+> Обе аннотации помечают класс как **Spring MVC контроллер** — то есть класс, который обрабатывает HTTP-запросы. Разница только в том, **что возвращает метод**:
+>
+> | Аннотация | Что возвращает метод | Как обрабатывается |
+> |-----------|---------------------|-------------------|
+> | `@Controller` | **Имя HTML-шаблона** (строку) или `ModelAndView` | Spring ищет файл в `templates/` и рендерит его через Thymeleaf |
+> | `@RestController` | **Данные** (объект, список, строку) | Spring сериализует их в JSON (или XML) через Jackson и отдаёт как HTTP-ответ |
+>
+> Технически `@RestController` = `@Controller` + `@ResponseBody`. То есть каждый метод этого класса по умолчанию помечен `@ResponseBody`, и возвращаемое значение идёт **прямо в тело HTTP-ответа**, минуя шаблонизатор .
+>
+> **Когда что использовать:**
+> - `@RestController` — для **REST API**: `/products` возвращает JSON, `/api/users` возвращает JSON. Именно так делают бэкенд для мобильных приложений или SPA (React, Vue).
+> - `@Controller` — для **серверного рендеринга HTML**: метод кладёт данные в `Model` и возвращает имя шаблона, Thymeleaf собирает HTML и отдаёт браузеру.
+>
+> В нашем проекте будут **оба**:
+> - `/products` → `@RestController` → JSON (удобно для отладки и будущего API);
+> - `/products-page` → `@Controller` → HTML (то, что видит пользователь в браузере).
+>
+> **Где почитать подробнее:**
+> - 🇬🇧 **Baeldung: The Spring @Controller and @RestController Annotations** — с примерами и таблицей различий: [ссылка](https://www.baeldung.com/spring-controller-vs-restcontroller)
+> - 🇷🇺 **Хабр: Spring MVC — @Controller и @RestController** — на русском, с примерами: [ссылка](https://habr.com/ru/articles/) *(поиск: «@Controller @RestController Spring»)*
+> - 🇬🇧 **Официальная документация Spring** — «Annotated Controllers»: [ссылка](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller.html)
+> - 🇷🇺 **JavaRush: Аннотации Spring MVC** — лекция с примерами `@Controller` и `@ResponseBody`: [ссылка](https://javarush.com/quests/lectures/ru.javarush.java.spring.lecture.level06.lecture02)
 
 Создайте файл `src/main/java/com/example/shop/ProductController.java`:
 
@@ -378,6 +425,27 @@ public class ProductController {
 > ✅ Если вы видите этот JSON — **БД + Spring Boot работают вместе**.
 
 ### 5.6. Первый HTML-шаблон (Thymeleaf)
+
+> 💡 **Что такое Thymeleaf (коротко)**
+>
+> Thymeleaf — это серверный **шаблонизатор**: он берёт обычный HTML-файл и динамически подставляет в него данные из Java-контроллера. В отличие от JSP, шаблон Thymeleaf можно открыть прямо в браузере (без запуска сервера) — браузер просто проигнорирует незнакомые атрибуты `th:*` и покажет статичную «рыбу» страницы . Когда приложение запущено, Thymeleaf заменяет содержимое тегов на реальные значения из модели .
+>
+> **Ключевые атрибуты, которые мы используем:**
+>
+> | Атрибут | Что делает | Пример |
+> |---------|-----------|--------|
+> | `th:text` | Подставляет текст из переменной | `<td th:text="${p.title}">Стикеры</td>` |
+> | `th:each` | Цикл по коллекции (как `for-each` в Java) | `<tr th:each="p : ${products}">` |
+> | `th:href` | Генерирует правильную ссылку с учётом контекста приложения | `<a th:href="@{/products}">` |
+> | `th:if` | Показывает блок только если условие истинно | `<div th:if="${p.quantity > 0}">` |
+>
+> В нашем случае контроллер кладёт в `Model` список `products`, а шаблон через `th:each` перебирает его и выводит строки таблицы .
+>
+> **Где почитать подробнее:**
+> - 🇷🇺 **Thymeleaf для новичков** (Skillbox) — простым языком про шаблонизаторы и `th:text`: [ссылка](https://skillbox.ru/media/code/thymeleaf-dlya-novichkov-ozhivlyaem-htmlshablony/)
+> - 🇷🇺 **Шаблонизаторы в Spring MVC: Thymeleaf** (JavaRush) — лекция с примерами таблиц и `th:each`: [ссылка](https://javarush.com/quests/lectures/ru.javarush.java.spring.lecture.level07.lecture07)
+> - 🇬🇧 **Официальная документация Thymeleaf** — «Using Thymeleaf» и «Thymeleaf + Spring»: [ссылка](https://www.thymeleaf.org/documentation.html)
+> - 🇬🇧 **Baeldung: Iteration in Thymeleaf** — всё про `th:each`, статусные переменные, чётные/нечётные строки: [ссылка](https://www.baeldung.com/thymeleaf-iteration)
 
 Теперь сделаем то же самое, но в виде HTML-страницы.
 
@@ -482,30 +550,4 @@ public class ProductViewController {
 Выполните все шаги урока:
 
 1. **Подключение к БД** — DBeaver, шаги 1–6.
-2. **Создание таблиц** — запуск `ScriptWithData.sql`, проверка (View Data, View Diagram).
-3. **Словарь данных** — изучите структуру БД, которую вы создали. На основе [шаблона](docs/DataDictionary_Template.xlsx) создайте словарь данных. Назовите его **`DataDictionaryOfФамилияИмя`** (например, `DataDictionaryOfIvanovIvan.xlsx`). В словаре должны быть **все 11 таблиц** вашей БД с описанием каждого поля.
-4. **Веб-приложение** — создайте Spring Boot проект `shop`, настройте подключение к своей БД, запустите приложение, добейтесь работоспособности:
-   - `http://localhost:8080/products` → JSON с товарами
-   - `http://localhost:8080/products-page` → HTML-таблица с товарами
-
-Загрузите на gogs-сервер, создав репозиторий с названием **`Lesson1`**, используя свои учетные данные из файла [215.md](215.md). В репозиторий положите:
-- словарь данных (`DataDictionaryOfФамилияИмя.xlsx`);
-- папку `shop` с исходным кодом приложения;
-- `.gitignore` (не забудьте исключить `target/`, `.idea/`, `application.properties`);
-- `application.properties.example` вместо реального `application.properties`.
-
----
-
-| Предыдущее занятие | &nbsp; | Следующее занятие |
-|:----------------:|:----------:|:----------------:|
-| [В начало](readme.md) | [Содержание](readme.md) | [Урок 2](Lesson2.md) |
-
----
-
-## 💡 Что дальше (анонс урока 2)
-
-На следующем занятии:
-- Заменим `JdbcTemplate` на **Spring Data JPA** (`@Entity`, `@Repository`).
-- Создадим сущности `Product`, `Category`, `Manufacturer`.
-- Добавим **навигацию** между страницами.
-- Начнём делать **форму добавления товара**.
+2. **Создание таблиц** — запуск `ScriptWithData.sql`, проверка (View Data, View Diagram
