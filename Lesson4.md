@@ -1,1749 +1,647 @@
+# Занятие 4. Spring Security: аутентификация, роли и защита админки
+
 Предыдущее занятие | &nbsp; | Следующее занятие
 :----------------:|:----------:|:----------------:
-[Урок 3](Lesson3.md) | [Содержание](readme.md) | [Урок 5](Lesson5.md)
+[В начало](readme.md) | [Содержание](readme.md) | [Урок 5](Lesson5.md)
 
-# Урок 4. CRUD товары
-1. [Добавление нового артефакта](#добавление-нового-артефакта)
-   * [pom.xml](#pomxml)
-2. [Добавление и изменение сущностей](#добавление-и-изменение-сущностей)
-   * [Order](#класс-order-)
-   * [OrderProduct](#класс-orderproduct-)
-   * [OrderProductId](#класс-orderproductid-)
-   * [Product](#класс-product)
-3. [Создание макета каталога товаров](#создание-макета-каталога-товаров)
-   * [main-view.fxml](#main-viewfxml)
-   * [products-table-view.fxml](#products-table-viewfxml)
-   * [products-edit-view.fxml](#products-edit-viewfxml)
-4. [Создание контроллеров](#создание-контроллеров)
-   * [MainWindowController](#класс-mainwindowcontroller)
-   * [ProductTableViewController](#класс-producttableviewcontroller)
-   * [ProductEditViewController](#класс-producteditviewcontroller)
-   * [Manager](#managerjava)
-   * [module-info.java](#module-infojava)
-   * [LoginController](#класс-logincontrollerjava)
-5. [Запуск приложения](#запуск-приложения)
-6. [Задания](#задания)
+## План
+1. [Введение: зачем нужна безопасность](#введение)
+2. [Аутентификация vs авторизация](#аутентификация-vs-авторизация)
+3. [Как работает Spring Security (фильтры)](#как-работает-spring-security)
+4. [Entity User и Role](#entity-user-и-role)
+5. [UserRepository и UserService](#userrepository-и-userservice)
+6. [BCrypt: почему нельзя хранить пароли в открытом виде](#bcrypt)
+7. [Конфигурация SecurityConfig](#конфигурация-securityconfig)
+8. [Страница входа (login)](#страница-входа)
+9. [Кнопка выхода и отображение пользователя](#кнопка-выхода)
+10. [Ограничение доступа по ролям](#ограничение-доступа-по-ролям)
+11. [SecurityUtils в пакете util](#securityutils-в-пакете-util)
+12. [Проверка и чек-лист](#проверка)
+13. [Задание](#задание)
 
-## Добавление нового артефакта
-1. Откройте файл pom.xml и замените его содержимое.
-### pom.xml
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+---
 
-    <groupId>ru.trade</groupId>
-    <artifactId>trade-app</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <name>trade-app</name>
+## Введение
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <junit.version>5.9.2</junit.version>
-    </properties>
+За три занятия мы построили приложение, которое:
+- читает товары и категории из БД,
+- добавляет, редактирует и удаляет товары,
+- имеет аккуратную слоистую архитектуру.
 
-    <dependencies>
-        <!-- https://mvnrepository.com/artifact/com.gluonhq/charm-glisten -->
-        <dependency>
-            <groupId>org.hibernate.validator</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <version>8.0.1.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-core</artifactId>
-            <version>6.2.7.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.7.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>21-ea+24</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-swing</artifactId>
-            <version>13.0.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>
-            <version>21-ea+24</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
+**Проблема:** кто угодно может открыть `/admin/products/new` и удалить все товары. Это недопустимо для реального интернет-магазина.
 
-    </dependencies>
+**Сегодня:** закроем админку паролем, добавим роли (клиент, менеджер, администратор) и научим приложение показывать имя текущего пользователя.
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <source>22</source>
-                    <target>22</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.8</version>
-                <executions>
-                    <execution>
-                        <!-- Default configuration for running with: mvn clean javafx:run -->
-                        <id>default-cli</id>
-                        <configuration>
-                            <mainClass>ru.trade.tradeapp/ru.trade.tradeapp.TradeApp</mainClass>
-                            <launcher>app</launcher>
-                            <jlinkZipName>app</jlinkZipName>
-                            <jlinkImageName>app</jlinkImageName>
-                            <noManPages>true</noManPages>
-                            <stripDebug>true</stripDebug>
-                            <noHeaderFiles>true</noHeaderFiles>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.3.1</version>
-                <configuration>
-                    <configLocation>checkstyle.xml</configLocation>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    <failOnViolation>true</failOnViolation>
-                    <logViolationsToConsole>true</logViolationsToConsole>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <phase>compile</phase>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+> 💡 В вашей БД уже есть таблицы `user` и `role` — мы их используем. Если их нет, загляните в `ScriptWithData.sql`.
+
+---
+
+## Аутентификация vs авторизация
+
+> 💡 Эти два слова часто путают. Разница принципиальная.
+
+| Термин | Вопрос, на который отвечает | Пример |
+|--------|----------------------------|--------|
+| **Аутентификация** (authentication) | «Кто ты?» | Ввод логина и пароля |
+| **Авторизация** (authorization) | «Что тебе можно?» | Роль `ADMIN` может удалять товары, роль `CLIENT` — нет |
+
+**Порядок такой:**
+1. Сначала приложение проверяет, кто вы (аутентификация).
+2. Потом смотрит, что вам разрешено (авторизация).
+
+Если аутентификация не пройдена — вы анонимный гость. Если пройдена, но роль не подходит — вы получаете **403 Forbidden**.
+
+---
+
+## Как работает Spring Security
+
+> 💡 **Spring Security — это цепочка сервлет-фильтров.** Каждый HTTP-запрос проходит через них по очереди, ещё до того, как он дойдёт до вашего контроллера.
+
+Упрощённо:
+
+```
+HTTP-запрос
+    ↓
+[Filter 1] SecurityContextPersistenceFilter   ← загружает пользователя из сессии
+    ↓
+[Filter 2] UsernamePasswordAuthenticationFilter ← обрабатывает POST /login
+    ↓
+[Filter 3] AuthorizationFilter                ← проверяет права на URL
+    ↓
+Ваш Controller
 ```
 
-## Добавление и изменение сущностей
+**Что это значит на практике:**
+- Если запрос идёт на защищённый URL и пользователь не залогинен — Spring перенаправит его на `/login`.
+- Если пользователь залогинен, но у него нет нужной роли — вернётся 403.
+- Если всё ок — запрос дойдёт до контроллера.
 
+> 💡 **Важно:** Spring Security сам по себе не знает, где хранятся пользователи. Мы должны дать ему `UserDetailsService`, который умеет искать пользователя по логину.
 
-1. В папке models создайте следующие классы
+---
 
-### класс Order 
+## Entity User и Role
+
+В нашей БД есть таблица `user` с полями `username`, `password`, `role_id` и таблица `role`. Создадим для них Entity.
+
+### 4.1. Entity Role
+
+`src/main/java/com/example/shop/entity/Role.java`:
 
 ```java
-package ru.demo.tradeapp.model;
+package com.example.shop.entity;
 
 import jakarta.persistence.*;
-
-import java.time.LocalDate;
-
-@Entity
-@Table(name = "orders", schema = "public")
-
-public class Order {
-
-    @Id
-    @Column(name = "order_id")
-    private Long orderId;
-
-    @Column(name = "status_id", nullable = false)
-    private Long statusId;
-
-    @Column(name = "pickuppoint_id", nullable = false)
-    private Long pickuppointId;
-
-    @Column(name = "create_date", nullable = false)
-    private LocalDate create_date;
-
-    @Column(name = "delivery_date", nullable = false)
-    private LocalDate deliveryDate;
-
-    @Column(name = "username", nullable = true, length = 50)
-    private Long username;
-
-    @Column(name = "get_code", nullable = false)
-    private Integer getCode;
-
-
-    public Long getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(Long orderId) {
-        this.orderId = orderId;
-    }
-
-    public Long getStatusId() {
-        return statusId;
-    }
-
-    public void setStatusId(Long statusId) {
-        this.statusId = statusId;
-    }
-
-    public Long getPickuppointId() {
-        return pickuppointId;
-    }
-
-    public void setPickuppointId(Long pickuppointId) {
-        this.pickuppointId = pickuppointId;
-    }
-
-    public LocalDate getCreate_date() {
-        return create_date;
-    }
-
-    public void setCreate_date(LocalDate create_date) {
-        this.create_date = create_date;
-    }
-
-    public LocalDate getDeliveryDate() {
-        return deliveryDate;
-    }
-
-    public void setDeliveryDate(LocalDate deliveryDate) {
-        this.deliveryDate = deliveryDate;
-    }
-
-    public Long getUsername() {
-        return username;
-    }
-
-    public void setUsername(Long username) {
-        this.username = username;
-    }
-
-    public Integer getGetCode() {
-        return getCode;
-    }
-
-    public void setGetCode(Integer getCode) {
-        this.getCode = getCode;
-    }
-}
-
-```
-
-### класс OrderProduct 
-
-```java
-package ru.demo.tradeapp.model;
-
-import jakarta.persistence.*;
-
+import lombok.Data;
 
 @Entity
-@IdClass(OrderProductId.class)
-@Table(name = "order_products", schema = "public")
-public class OrderProduct {
+@Table(name = "role")
+@Data
+public class Role {
 
     @Id
-    @Column(name = "order_id", nullable = false)
-    private Long orderId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-    @Id
-    @Column(name = "product_id", nullable = false)
-    private String productId;
-
-    @Column(name = "count", nullable = false)
-    private Long count;
-
-    public Long getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(Long orderId) {
-        this.orderId = orderId;
-    }
-
-    public String getProductId() {
-        return productId;
-    }
-
-    public void setProductId(String productId) {
-        this.productId = productId;
-    }
-
-    public Long getCount() {
-        return count;
-    }
-
-    public void setCount(Long count) {
-        this.count = count;
-    }
-}
-
-```
-
-### класс OrderProductId 
-
-```java
-package ru.demo.tradeapp.model;
-
-import java.io.Serializable;
-import java.util.Objects;
-
-public class OrderProductId implements Serializable {
-    private Long orderId;
-
-    private String productId;
-
-    public OrderProductId() {
-    }
-
-    public OrderProductId(Long orderId, String productId) {
-        this.orderId = orderId;
-        this.productId = productId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof OrderProductId that)) return false;
-        return Objects.equals(orderId, that.orderId) && Objects.equals(productId, that.productId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(orderId, productId);
-    }
-
-    // equals() and hashCode()
-}
-
-```
-
-2. Измените содержимое класса Product
-### класс Product
-```java
-package ru.demo.tradeapp.model;
-
-
-import jakarta.persistence.*;
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import ru.demo.tradeapp.TradeApp;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
-@Entity
-@Table(name = "products", schema = "public")
-
-public class Product {
-
-    @Id
-    @Column(name = "product_id", nullable = false, length = 100)
-    private String productId;
-    @Column(name = "title", nullable = false, length = 100)
+    @Column(name = "title", nullable = false, length = 20)
     private String title;
-    @Column(name = "description")
-    private String description;
-    @Column(name = "cost", nullable = false)
-    private Double cost;
-    @Column(name = "max_discount_amount")
-    private Integer maxDiscountAmount;
-    @Column(name = "discount_amount")
-    private Integer discountAmount;
-    @Column(name = "quantity_in_stock", nullable = false)
-    private Integer quantityInStock;
-
-    @OneToMany
-    @JoinColumn(name = "product_id")
-    private Set<OrderProduct> orderProducts = new HashSet<OrderProduct>();
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "unittype_id", nullable = false)
-    private Unittype unittype;
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "manufacturer_id", nullable = false)
-    private Manufacturer manufacturer;
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "supplier_id", nullable = false)
-    private Supplier supplier;
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
-    @Column(name = "photo")
-    private byte[] photo;
-
-
-    public Set<OrderProduct> getOrderProducts() {
-        return orderProducts;
-    }
-
-
-    public String getProductId() {
-        return productId;
-    }
-
-    public void setProductId(String productId) {
-        this.productId = productId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Double getCost() {
-        return cost;
-    }
-
-    public void setCost(Double cost) {
-        this.cost = cost;
-    }
-
-    public Integer getMaxDiscountAmount() {
-        return maxDiscountAmount;
-    }
-
-    public void setMaxDiscountAmount(Integer maxDiscountAmount) {
-        this.maxDiscountAmount = maxDiscountAmount;
-    }
-
-    public Integer getDiscountAmount() {
-        return discountAmount;
-    }
-
-    public void setDiscountAmount(Integer discountAmount) {
-        this.discountAmount = discountAmount;
-    }
-
-    public Integer getQuantityInStock() {
-        return quantityInStock;
-    }
-
-    public void setQuantityInStock(Integer quantityInStock) {
-        this.quantityInStock = quantityInStock;
-    }
-
-    public Unittype getUnittype() {
-        return unittype;
-    }
-
-    public void setUnittype(Unittype unittype) {
-        this.unittype = unittype;
-    }
-
-    public Manufacturer getManufacturer() {
-        return manufacturer;
-    }
-
-    public void setManufacturer(Manufacturer manufacturer) {
-        this.manufacturer = manufacturer;
-    }
-
-    public Supplier getSupplier() {
-        return supplier;
-    }
-
-    public void setSupplier(Supplier supplier) {
-        this.supplier = supplier;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
-
-    public boolean isHasPhoto() {
-        return photo != null;
-    }
-
-    public Image getPhoto() throws IOException {
-        if (photo == null)
-            return new Image(TradeApp.class.getResourceAsStream("picture.png"));
-        BufferedImage capture = ImageIO.read(new ByteArrayInputStream(photo));
-        return SwingFXUtils.toFXImage(capture, null);
-    }
-
-    public void setPhoto(Image img) throws IOException {
-        BufferedImage buf = SwingFXUtils.fromFXImage(img, null);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(buf, "jpg", baos);
-        byte[] bytes = baos.toByteArray();
-        this.photo = bytes;
-    }
-
-    public ImageView getImage() throws IOException {
-        ImageView image = new ImageView();
-        image.setImage(getPhoto());
-        image.setFitHeight(60);
-        image.setPreserveRatio(true);
-        return image;
-    }
-
-    public Double getPriceWithDiscount() {
-        return cost * (1 - discountAmount / 100.0);
-    }
 }
-
-
-```
-4. Измените содержимое файла hibernate.cfg.xml(Мы добавили mapping на новые добавленные классы)
-```xml
-<?xml version = "1.0" encoding = "utf-8"?>
-<!DOCTYPE hibernate-configuration PUBLIC
-        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
-        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
-<hibernate-configuration>
-    <session-factory>
-        <!-- Set URL -->
-        <property name = "hibernate.connection.url">jdbc:postgresql://192.168.2.202:5432/trade</property>
-        <!-- Set User Name -->
-        <property name = "hibernate.connection.username">postgres</property>
-        <!-- Set Password -->
-        <property name = "hibernate.connection.password">root</property>
-        <!-- Set Driver Name -->
-        <property name = "hibernate.connection.driver_class">org.postgresql.Driver</property>
-        <property name = "hibernate.show_sql">true</property>
-        <!-- Optional: Auto-generate schema -->
-        <!-- <property name = "hibernate.hbm2ddl.auto">create</property> -->
-        <mapping class="ru.demo.tradeapp.model.User" />
-        <mapping class="ru.demo.tradeapp.model.Category" />
-        <mapping class="ru.demo.tradeapp.model.Manufacturer" />
-        <mapping class="ru.demo.tradeapp.model.Product" />
-        <mapping class="ru.demo.tradeapp.model.Supplier" />
-        <mapping class="ru.demo.tradeapp.model.Unittype" />
-        <mapping class="ru.demo.tradeapp.model.Order" />
-        <mapping class="ru.demo.tradeapp.model.OrderProduct" />
-    </session-factory>
-</hibernate-configuration>
-
 ```
 
-## Создание и изменение существующих макетов
+### 4.2. Entity User
 
-1. Откройте файл main-view.fxml и замените его код
+`src/main/java/com/example/shop/entity/User.java`:
 
-### main-view.fxml
-```fxml
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.demo.tradeapp.controller.MainWindowController">
-   <children>
-      <BorderPane prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-         <center>
-            <BorderPane fx:id="BorderPaneMainFrame" BorderPane.alignment="CENTER">
-               <top>
-                  <FlowPane minHeight="-Infinity" nodeOrientation="LEFT_TO_RIGHT" prefHeight="50.0" prefWidth="200.0" rowValignment="TOP" BorderPane.alignment="CENTER">
-                     <children>
-                        <TextField fx:id="TextFieldSearch" onAction="#TextFieldSearchAction" onInputMethodTextChanged="#TextFieldTextChanged" prefHeight="25.0" prefWidth="262.0" promptText="Введите название для поиска" />
-                        <ComboBox fx:id="ComboBoxProductType" onAction="#ComboBoxProductTypeAction" prefWidth="150.0" promptText="тип продукта" />
-                        <ComboBox fx:id="ComboBoxDiscount" onAction="#ComboBoxDiscountAction" prefHeight="26.0" prefWidth="143.0" promptText="скидка" />
-                        <ComboBox fx:id="ComboBoxSort" onAction="#ComboBoxSortAction" prefWidth="150.0" promptText="сортировка" />
-                     </children>
-                  </FlowPane>
-               </top>
-               <center>
-                  <ListView fx:id="ListViewProducts" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="201.0" prefWidth="600.0" BorderPane.alignment="CENTER" />
-               </center>
-            </BorderPane>
-         </center>
-         <top>
-            <ToolBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER_RIGHT">
-              <items>
-                  <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" prefHeight="30.0" prefWidth="320.0" />
-                  <Label fx:id="LabelUser" prefWidth="120.0" text="Label" />
-                  <Button fx:id="BtnProducts" mnemonicParsing="false" onAction="#BtnProductsAction" text="Товары" />
-                <Button fx:id="BtnBack" alignment="CENTER_RIGHT" mnemonicParsing="false" onAction="#BtnBackAction" text="Заказы" textAlignment="RIGHT" />
-              </items>
-            </ToolBar>
-         </top>
-         <bottom>
-            <Label fx:id="LabelInfo" text="Label" BorderPane.alignment="CENTER_LEFT" />
-         </bottom>
-      </BorderPane>
-   </children>
-</AnchorPane>
-
-```
-![img_2.png](Lesson4Images/img_12.png)
-
-2. В папке с ресурсами создайте новый файл products-table-view.fxml добавьте в него этот код.
-### products-table-view.fxml
-```fxml
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.demo.tradeapp.controller.ProductTableViewController">
-   <children>
-      <BorderPane prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-         <top>
-            <ToolBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER_RIGHT">
-               <items>
-                  <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" prefHeight="30.0" prefWidth="225.0" />
-                  <Label fx:id="LabelUser" prefWidth="120.0" text="Label" />
-                  <Button fx:id="BtnAdd" mnemonicParsing="false" onAction="#BtnAddAction" text="Добавить" />
-                  <Button fx:id="BtnUpdate" mnemonicParsing="false" onAction="#BtnUpdateAction" text="Изменить" />
-                  <Button fx:id="BtnDelete" mnemonicParsing="false" onAction="#BtnDeleteAction" text="Удалить" />
-                  <Button fx:id="BtnBack" alignment="CENTER_RIGHT" mnemonicParsing="false" onAction="#BtnBackAction" text="Назад" textAlignment="RIGHT" />
-               </items>
-            </ToolBar>
-         </top>
-         <center>
-            <BorderPane BorderPane.alignment="CENTER">
-               <top>
-                  <FlowPane minHeight="-Infinity" nodeOrientation="LEFT_TO_RIGHT" prefHeight="50.0" prefWidth="200.0" rowValignment="TOP" BorderPane.alignment="CENTER">
-                     <children>
-                        <TextField fx:id="TextFieldSearch" onAction="#TextFieldSearchAction" onInputMethodTextChanged="#TextFieldTextChanged" prefHeight="25.0" prefWidth="262.0" promptText="Введите название для поиска" />
-                        <ComboBox fx:id="ComboBoxProductType" onAction="#ComboBoxProductTypeAction" prefWidth="150.0" promptText="тип продукта" />
-                        <ComboBox fx:id="ComboBoxDiscount" onAction="#ComboBoxDiscountAction" prefHeight="26.0" prefWidth="143.0" promptText="скидка" />
-                        <ComboBox fx:id="ComboBoxSort" onAction="#ComboBoxSortAction" prefWidth="150.0" promptText="сортировка" />
-                     </children>
-                  </FlowPane>
-               </top>
-               <center>
-                  <TableView fx:id="TableViewProducts" fixedCellSize="120.0" prefHeight="200.0" prefWidth="200.0" tableMenuButtonVisible="true" BorderPane.alignment="CENTER">
-                    <columns>
-                        <TableColumn id="TableColumnPhoto" fx:id="TableColumnPhoto" prefWidth="96.0" resizable="false" text="Фото" />
-                      <TableColumn id="TableColumnProductId" fx:id="TableColumnProductId" minWidth="0.0" prefWidth="93.0" text="Артикул" />
-                      <TableColumn id="TableColumnTitle" fx:id="TableColumnTitle" maxWidth="1.7976931348623157E308" prefWidth="121.0" resizable="false" text="Наименование" />
-                        <TableColumn id="TableColumnCountInStock" fx:id="TableColumnCountInStock" prefWidth="82.0" text="Количество на складе" />
-                        <TableColumn fx:id="TableColumnDiscount" prefWidth="50.0" text="Скидка" />
-                        <TableColumn fx:id="TableColumnCost" prefWidth="139.0" text="Цена со скидкой" />
-                    </columns>
-                  </TableView>
-               </center>
-            </BorderPane>
-         </center>
-         <bottom>
-            <Label fx:id="LabelInfo" text="Label" BorderPane.alignment="CENTER_LEFT" />
-         </bottom>
-      </BorderPane>
-   </children>
-</AnchorPane>
-
-```
-![img_1.png](Lesson4Images/img_11.png)
-
-3В папке с ресурсами создайте новый файл product-edit-view.fxml добавьте в него этот код.
-### product-edit-view.fxml
-```fxml
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ButtonBar?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TextArea?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.RowConstraints?>
-
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.demo.tradeapp.controller.ProductEditViewController">
-   <children>
-      <BorderPane layoutX="170.0" layoutY="47.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-         <bottom>
-            <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-              <buttons>
-                <Button fx:id="BtnSave" defaultButton="true" mnemonicParsing="false" onAction="#BtnSaveAction" text="Сохранить" />
-                  <Button fx:id="BtnCancel" cancelButton="true" mnemonicParsing="false" onAction="#BtnCancelAction" text="Отмена" />
-              </buttons>
-               <padding>
-                  <Insets right="20.0" />
-               </padding>
-            </ButtonBar>
-         </bottom>
-         <center>
-            <GridPane BorderPane.alignment="CENTER">
-              <columnConstraints>
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="190.0" minWidth="10.0" prefWidth="190.0" />
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="680.0" minWidth="10.0" prefWidth="610.0" />
-              </columnConstraints>
-              <rowConstraints>
-                <RowConstraints minHeight="10.0" prefHeight="30.0" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="ALWAYS" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" />
-                  <RowConstraints minHeight="10.0" prefHeight="100.0" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" />
-              </rowConstraints>
-               <children>
-                  <TextField fx:id="TextFieldArtikul" GridPane.columnIndex="1" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Артикул" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Название" GridPane.rowIndex="2" />
-                  <TextField fx:id="TextFieldTitle" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                  <TextArea fx:id="TextAreaDescription" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Описание" GridPane.rowIndex="4" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Стоимость за единицу" GridPane.rowIndex="5" />
-                  <TextField fx:id="TextFieldCost" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-                  <ComboBox fx:id="ComboBoxCategory" prefHeight="25.0" prefWidth="300.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Категория товара" GridPane.rowIndex="3" />
-                  <ComboBox fx:id="ComboBoxUnittype" prefHeight="25.0" prefWidth="300.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Единицы измерения" GridPane.rowIndex="7" />
-                  <ComboBox fx:id="ComboBoxManufacturer" prefHeight="25.0" prefWidth="300.0" GridPane.columnIndex="1" GridPane.rowIndex="8" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Производитель" GridPane.rowIndex="8" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Поставщик" GridPane.rowIndex="9" />
-                  <ComboBox fx:id="ComboBoxSupplier" prefHeight="25.0" prefWidth="300.0" GridPane.columnIndex="1" GridPane.rowIndex="9" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="17.0" prefWidth="184.0" text="Размер максимальной скидки" GridPane.rowIndex="10" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Количество на складе" GridPane.rowIndex="6" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Изображение" GridPane.rowIndex="1" />
-                  <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="17.0" prefWidth="184.0" text="Размер действующей скидки" GridPane.rowIndex="11" />
-                  <ImageView fx:id="ImageViewPhoto" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                  <Button fx:id="BtnLoadImage" mnemonicParsing="false" onAction="#BtnLoadImageAction" text="Загрузить" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.valignment="BOTTOM">
-                     <GridPane.margin>
-                        <Insets left="200.0" />
-                     </GridPane.margin>
-                  </Button>
-                  <TextField fx:id="TextFieldCountInStock" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-                  <TextField fx:id="TextFieldDiscountAmountMax" GridPane.columnIndex="1" GridPane.rowIndex="10" />
-                  <TextField fx:id="TextFieldDiscountAmount" GridPane.columnIndex="1" GridPane.rowIndex="11" />
-               </children>
-            </GridPane>
-         </center>
-      </BorderPane>
-   </children>
-</AnchorPane>
-
-```
-![img_3.png](Lesson4Images/img_13.png)
-
-## Создание контроллеров
-1. в папке откройте файл MainWindowController. Замените его код на следующий
-![img_7.png](Lesson3Images/img_7.png)
-### Класс MainWindowController
 ```java
-package ru.demo.tradeapp.controller;
+package com.example.shop.entity;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import ru.demo.tradeapp.TradeApp;
-import ru.demo.tradeapp.model.Category;
-import ru.demo.tradeapp.model.Product;
-import ru.demo.tradeapp.service.CategoryService;
-import ru.demo.tradeapp.service.ProductService;
-import ru.demo.tradeapp.util.Manager;
+import jakarta.persistence.*;
+import lombok.Data;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Comparator;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
+@Entity
+@Table(name = "\"user\"")
+@Data
+public class User {
 
-public class MainWindowController implements Initializable {
+    @Id
+    @Column(name = "username", length = 50)
+    private String username;
 
-    @FXML
-    ComboBox<String> ComboBoxDiscount;
-    private int itemsCount;
-    private CategoryService categoryService = new CategoryService();
-    private ProductService productService = new ProductService();
-    @FXML
-    private Button BtnBack;
-    @FXML
-    private ListView<Product> ListViewProducts;
-    @FXML
-    private Button BtnProducts;
-    @FXML
-    private ComboBox<Category> ComboBoxProductType;
-    @FXML
-    private ComboBox<String> ComboBoxSort;
-    @FXML
-    private Label LabelInfo;
+    @Column(name = "password", nullable = false, length = 50)
+    private String password;
 
-    @FXML
-    private Label LabelUser;
+    @Column(name = "first_name", nullable = false, length = 30)
+    private String firstName;
 
-    @FXML
-    private TextField TextFieldSearch;
+    @Column(name = "second_name", nullable = false, length = 30)
+    private String secondName;
 
-    @FXML
-    private BorderPane BorderPaneMainFrame;
+    @Column(name = "middle_name", length = 30)
+    private String middleName;
 
-    @FXML
-    void BtnBackAction(ActionEvent event) {
-
-    }
-
-    @FXML
-    void TextFieldTextChanged(ActionEvent event) {
-        filterData();
-    }
-
-    @FXML
-    void ComboBoxProductTypeAction(ActionEvent event) {
-        filterData();
-    }
-
-    @FXML
-    void ComboBoxDiscountAction(ActionEvent event) {
-        filterData();
-    }
-
-    @FXML
-    void BtnProductsAction(ActionEvent event) {
-        FXMLLoader fxmlLoader = new FXMLLoader(TradeApp.class.getResource("products-table-view.fxml"));
-
-        Scene scene = null;
-        try {
-            scene = new Scene(fxmlLoader.load());
-            scene.getStylesheets().add("base-styles.css");
-            Manager.secondStage.setScene(scene);
-
-            //Manager.mainStage.show();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @FXML
-    void ComboBoxSortAction(ActionEvent event) {
-        filterData();
-    }
-
-    @FXML
-    void TextFieldSearchAction(ActionEvent event) {
-        filterData();
-    }
-
-
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        LabelUser.setText(Manager.currentUser.getFirstName());
-        List<Category> categoryList = categoryService.findAll();
-        categoryList.add(0, new Category(0L, "Все"));
-        ObservableList<Category> categories = FXCollections.observableArrayList(categoryList);
-        ComboBoxProductType.setItems(categories);
-        ObservableList<String> discounts = FXCollections.observableArrayList("Все товары", "0-9.99%", "10-14.99%", "15% и более");
-        ComboBoxDiscount.setItems(discounts);
-        ObservableList<String> orders = FXCollections.observableArrayList("по возрастанию цены", "по убыванию цены");
-        ComboBoxSort.setItems(orders);
-        filterData();
-    }
-
-    public void loadProducts(Category category) {
-        ListViewProducts.getItems().clear();
-        List<Product> products = productService.findAll();
-        itemsCount = products.size();
-        LabelInfo.setText("Всего записей " + itemsCount + " из " + itemsCount);
-        if (category != null) {
-            products = products.stream().filter(product -> product.getCategory().getCategoryId().equals(category.getCategoryId())).collect(Collectors.toList());
-            int filteredItemsCount = products.size();
-            LabelInfo.setText("Всего записей " + filteredItemsCount + " из " + itemsCount);
-        }
-        for (Product product : products) {
-            ListViewProducts.getItems().add(product);
-        }
-        ListViewProducts.setCellFactory(lv -> new ProductCell());
-    }
-
-    void filterData() {
-        List<Product> products = productService.findAll();
-        itemsCount = products.size();
-        if (!ComboBoxProductType.getSelectionModel().isEmpty()) {
-            Category category = ComboBoxProductType.getValue();
-            if (category.getCategoryId() != 0) {
-                products = products.stream().filter(product -> product.getCategory().getCategoryId().equals(category.getCategoryId())).collect(Collectors.toList());
-            }
-        }
-        if (!ComboBoxDiscount.getSelectionModel().isEmpty()) {
-            String discount = ComboBoxDiscount.getValue();
-            if (discount.equals("0-9.99%")) {
-                products = products.stream().filter(product -> product.getDiscountAmount() < 10).collect(Collectors.toList());
-            }
-            if (discount.equals("10-14.99%")) {
-                products = products.stream().filter(product -> product.getDiscountAmount() >= 10 && product.getDiscountAmount() < 15).collect(Collectors.toList());
-            }
-            if (discount.equals("15% и более")) {
-                products = products.stream().filter(product -> product.getDiscountAmount() >= 15).collect(Collectors.toList());
-            }
-        }
-        if (!ComboBoxSort.getSelectionModel().isEmpty()) {
-            String order = ComboBoxSort.getValue();
-            if (order.equals("по возрастанию цены")) {
-                products = products.stream().sorted(Comparator.comparing(Product::getPriceWithDiscount)).collect(Collectors.toList());
-            }
-            if (order.equals("по убыванию цены")) {
-                products = products.stream().sorted(Comparator.comparing(Product::getPriceWithDiscount)).collect(Collectors.toList()).reversed();
-            }
-        }
-
-        String searchText = TextFieldSearch.getText();
-        if (!searchText.isEmpty()) {
-            products = products.stream().filter(product -> product.getTitle().toLowerCase().contains(searchText.toLowerCase())).collect(Collectors.toList());
-        }
-        ListViewProducts.getItems().clear();
-        for (Product product : products) {
-            ListViewProducts.getItems().add(product);
-        }
-        ListViewProducts.setCellFactory(lv -> new ProductCell());
-        int filteredItemsCount = products.size();
-        LabelInfo.setText("Всего записей " + filteredItemsCount + " из " + itemsCount);
-    }
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
+    private Role role;
 }
-
-```
-2. Добавьте в папку controller класс ProductTableViewController и замените код/
-### Класс ProductTableViewController
-```java
-package ru.demo.tradeapp.controller;
-
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.InputMethodEvent;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import ru.demo.tradeapp.TradeApp;
-import ru.demo.tradeapp.model.Category;
-import ru.demo.tradeapp.model.Product;
-import ru.demo.tradeapp.service.CategoryService;
-import ru.demo.tradeapp.service.ProductService;
-import ru.demo.tradeapp.util.Manager;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
-
-import static ru.demo.tradeapp.util.Manager.*;
-
-public class ProductTableViewController implements Initializable {
-
-    private int itemsCount;
-    private CategoryService categoryService = new CategoryService();
-    private ProductService productService = new ProductService();
-    @FXML
-    private ComboBox<String> ComboBoxDiscount;
-
-    @FXML
-    private ComboBox<Category> ComboBoxProductType;
-
-    @FXML
-    private ComboBox<String> ComboBoxSort;
-    @FXML
-    private Button BtnBack;
-
-    @FXML
-    private TableColumn<Product, ImageView> TableColumnPhoto;
-
-    @FXML
-    private TableColumn<Product, Integer> TableColumnCountInStock;
-
-    @FXML
-    private TableColumn<Product, Integer> TableColumnDiscount;
-
-    @FXML
-    private TableColumn<Product, String> TableColumnCost;
-
-    @FXML
-    private TableColumn<Product, String> TableColumnProductId;
-    @FXML
-    private Button BtnAdd;
-
-    @FXML
-    private Button BtnDelete;
-
-    @FXML
-    private Button BtnUpdate;
-
-    @FXML
-    private TableColumn<Product, String> TableColumnTitle;
-    @FXML
-    private Label LabelInfo;
-    @FXML
-    private Label LabelUser;
-    @FXML
-    private TextField TextFieldSearch;
-
-
-    @FXML
-    private TableView<Product> TableViewProducts;
-
-    @FXML
-    void ComboBoxDiscountAction(ActionEvent event) {
-        filterData();
-    }
-
-    @FXML
-    void ComboBoxProductTypeAction(ActionEvent event) {
-        filterData();
-    }
-
-    @FXML
-    void ComboBoxSortAction(ActionEvent event) {
-        filterData();
-    }
-
-    @FXML
-    void TextFieldSearchAction(ActionEvent event) {
-        filterData();
-    }
-
-    @FXML
-    void BtnBackAction(ActionEvent event) {
-        FXMLLoader fxmlLoader = new FXMLLoader(TradeApp.class.getResource("main-view.fxml"));
-        Scene scene = null;
-        try {
-            scene = new Scene(fxmlLoader.load());
-            scene.getStylesheets().add("base-styles.css");
-            Manager.secondStage.setScene(scene);
-            //Manager.mainStage.show();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @FXML
-    void BtnAddAction(ActionEvent event) {
-        Product product = TableViewProducts.getSelectionModel().getSelectedItem();
-        Manager.currentProduct = null;
-        ShowEditProductWindow();
-        filterData();
-    }
-
-    @FXML
-    void BtnDeleteAction(ActionEvent event) {
-        Product product = TableViewProducts.getSelectionModel().getSelectedItem();
-        if (!product.getOrderProducts().isEmpty())
-        {
-            ShowErrorMessageBox("Ошибка целостности данных, у данного товара есть зависимые заказы");
-            return;
-        }
-
-        Optional<ButtonType> result = ShowConfirmPopup();
-        if (result.get() == ButtonType.OK) {
-            productService.delete(product);
-            filterData();
-        }
-
-    }
-
-    @FXML
-    void BtnUpdateAction(ActionEvent event) {
-        Product product = TableViewProducts.getSelectionModel().getSelectedItem();
-        Manager.currentProduct = product;
-        ShowEditProductWindow();
-        filterData();
-    }
-
-    void ShowEditProductWindow() {
-        Stage newWindow = new Stage();
-        FXMLLoader fxmlLoader = new FXMLLoader(TradeApp.class.getResource("product-edit-view.fxml"));
-
-        Scene scene = null;
-        try {
-            scene = new Scene(fxmlLoader.load());
-            scene.getStylesheets().add("base-styles.css");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        newWindow.setTitle("Изменить данные");
-        newWindow.initOwner(Manager.secondStage);
-        newWindow.initModality(Modality.WINDOW_MODAL);
-        newWindow.setScene(scene);
-        Manager.currentStage = newWindow;
-        newWindow.showAndWait();
-        Manager.currentStage = null;
-        filterData();
-    }
-
-    @FXML
-    void TextFieldTextChanged(InputMethodEvent event) {
-
-    }
-
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        initController();
-    }
-
-    public void initController() {
-        LabelUser.setText(Manager.currentUser.getFirstName());
-        List<Category> categoryList = categoryService.findAll();
-        categoryList.add(0, new Category(0L, "Все"));
-        ObservableList<Category> categories = FXCollections.observableArrayList(categoryList);
-        ComboBoxProductType.setItems(categories);
-        ObservableList<String> discounts = FXCollections.observableArrayList("Все товары", "0-9.99%", "10-14.99%", "15% и более");
-        ComboBoxDiscount.setItems(discounts);
-        ObservableList<String> orders = FXCollections.observableArrayList("по возрастанию цены", "по убыванию цены");
-        ComboBoxSort.setItems(orders);
-        setCellValueFactories();
-        filterData();
-    }
-
-    void filterData() {
-        List<Product> products = productService.findAll();
-        itemsCount = products.size();
-        if (!ComboBoxProductType.getSelectionModel().isEmpty()) {
-            Category category = ComboBoxProductType.getValue();
-            if (category.getCategoryId() != 0) {
-                products = products.stream().filter(product -> product.getCategory().getCategoryId().equals(category.getCategoryId())).collect(Collectors.toList());
-            }
-        }
-        if (!ComboBoxDiscount.getSelectionModel().isEmpty()) {
-            String discount = ComboBoxDiscount.getValue();
-            if (discount.equals("0-9.99%")) {
-                products = products.stream().filter(product -> product.getDiscountAmount() < 10).collect(Collectors.toList());
-            }
-            if (discount.equals("10-14.99%")) {
-                products = products.stream().filter(product -> product.getDiscountAmount() >= 10 && product.getDiscountAmount() < 15).collect(Collectors.toList());
-            }
-            if (discount.equals("15% и более")) {
-                products = products.stream().filter(product -> product.getDiscountAmount() >= 15).collect(Collectors.toList());
-            }
-        }
-        if (!ComboBoxSort.getSelectionModel().isEmpty()) {
-            String order = ComboBoxSort.getValue();
-            if (order.equals("по возрастанию цены")) {
-                products = products.stream().sorted(Comparator.comparing(Product::getPriceWithDiscount)).collect(Collectors.toList());
-            }
-            if (order.equals("по убыванию цены")) {
-                products = products.stream().sorted(Comparator.comparing(Product::getPriceWithDiscount)).collect(Collectors.toList()).reversed();
-            }
-        }
-
-        String searchText = TextFieldSearch.getText();
-        if (!searchText.isEmpty()) {
-            products = products.stream().filter(product -> product.getTitle().toLowerCase().contains(searchText.toLowerCase())).collect(Collectors.toList());
-        }
-        TableViewProducts.getItems().clear();
-        for (Product product : products) {
-            TableViewProducts.getItems().add(product);
-        }
-        int filteredItemsCount = products.size();
-        LabelInfo.setText("Всего записей " + filteredItemsCount + " из " + itemsCount);
-    }
-
-    private void setCellValueFactories() {
-
-        TableColumnPhoto.setCellValueFactory(cellData -> {
-            try {
-                return new SimpleObjectProperty<ImageView>(cellData.getValue().getImage());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        TableColumnProductId.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getProductId()));
-        TableColumnTitle.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
-        TableColumnCountInStock.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getQuantityInStock()).asObject());
-        TableColumnCost.setCellValueFactory(cellData -> new SimpleStringProperty(String.format(String.format("%.2f", cellData.getValue().getCost()) + " руб.")));
-        TableColumnDiscount.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDiscountAmount()).asObject());
-    }
-}
-
-```
-3. Добавьте в папку controller класс ProductEditViewController и замените код.
-### Класс ProductEditViewController
-```java
-package ru.demo.tradeapp.controller;
-
-import javafx.collections.FXCollections;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-import ru.demo.tradeapp.model.*;
-import ru.demo.tradeapp.service.*;
-import ru.demo.tradeapp.util.Manager;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ResourceBundle;
-
-import static ru.demo.tradeapp.util.Manager.MessageBox;
-
-public class ProductEditViewController implements Initializable {
-    boolean imageLoaded = false;
-    @FXML
-    private Button BtnCancel;
-    @FXML
-    private Button BtnLoadImage;
-    @FXML
-    private Button BtnSave;
-    private CategoryService categoryService = new CategoryService();
-    private ManufacturerService manufacturerService = new ManufacturerService();
-    private SupplierService supplierService = new SupplierService();
-    private UnittypeService unittypeService = new UnittypeService();
-    private ProductService productService = new ProductService();
-    @FXML
-    private ComboBox<Category> ComboBoxCategory;
-
-    @FXML
-    private ComboBox<Manufacturer> ComboBoxManufacturer;
-
-    @FXML
-    private ComboBox<Supplier> ComboBoxSupplier;
-
-    @FXML
-    private ComboBox<Unittype> ComboBoxUnittype;
-    @FXML
-    private ImageView ImageViewPhoto;
-    @FXML
-    private TextArea TextAreaDescription;
-
-    @FXML
-    private TextField TextFieldArtikul;
-
-    @FXML
-    private TextField TextFieldCost;
-
-    @FXML
-    private TextField TextFieldCountInStock;
-
-    @FXML
-    private TextField TextFieldDiscountAmount;
-
-    @FXML
-    private TextField TextFieldDiscountAmountMax;
-
-    @FXML
-    private TextField TextFieldTitle;
-
-    @FXML
-    void BtnLoadImageAction(ActionEvent event) throws MalformedURLException {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("JPG", "*.jpg")
-        );
-        Stage stage = (Stage) BtnLoadImage.getScene().getWindow();
-        File file = fileChooser.showOpenDialog(stage);
-
-        if (file != null) {
-            String imageUrl = file.toURI().toURL().toExternalForm();
-            ImageViewPhoto.setImage(new Image(imageUrl));
-            imageLoaded = true;
-        }
-    }
-
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        ComboBoxCategory.setItems(FXCollections.observableArrayList(categoryService.findAll()));
-        ComboBoxSupplier.setItems(FXCollections.observableArrayList(supplierService.findAll()));
-        ComboBoxManufacturer.setItems(FXCollections.observableArrayList(manufacturerService.findAll()));
-        ComboBoxUnittype.setItems(FXCollections.observableArrayList(unittypeService.findAll()));
-        if (Manager.currentProduct != null) {
-            TextFieldArtikul.setEditable(false);
-            TextFieldArtikul.setText(Manager.currentProduct.getProductId());
-            TextFieldTitle.setText(Manager.currentProduct.getTitle());
-            TextAreaDescription.setText(Manager.currentProduct.getDescription());
-            TextFieldCost.setText(String.format("%.2f", Manager.currentProduct.getCost()));
-            TextFieldCountInStock.setText(Manager.currentProduct.getQuantityInStock().toString());
-            TextFieldDiscountAmount.setText(Manager.currentProduct.getDiscountAmount().toString());
-            TextFieldDiscountAmountMax.setText(Manager.currentProduct.getMaxDiscountAmount().toString());
-            try {
-                ImageViewPhoto.setImage(Manager.currentProduct.getPhoto());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            ComboBoxCategory.setValue(Manager.currentProduct.getCategory());
-            ComboBoxSupplier.setValue(Manager.currentProduct.getSupplier());
-            ComboBoxManufacturer.setValue(Manager.currentProduct.getManufacturer());
-            ComboBoxUnittype.setValue(Manager.currentProduct.getUnittype());
-        } else {
-            Manager.currentProduct = new Product();
-        }
-    }
-
-    @FXML
-    void BtnCancelAction(ActionEvent event) {
-        Stage stage = (Stage) BtnCancel.getScene().getWindow();
-        // do what you have to do
-        stage.close();
-    }
-
-    @FXML
-    void BtnSaveAction(ActionEvent event) throws IOException {
-        String error = checkFields().toString();
-        if (!error.isEmpty()) {
-            MessageBox("Ошибка", "Заполните поля", error, Alert.AlertType.ERROR);
-            return;
-        }
-        Manager.currentProduct.setTitle(TextFieldTitle.getText());
-        Manager.currentProduct.setCategory(ComboBoxCategory.getValue());
-        Manager.currentProduct.setSupplier(ComboBoxSupplier.getValue());
-        Manager.currentProduct.setUnittype(ComboBoxUnittype.getValue());
-        Manager.currentProduct.setManufacturer(ComboBoxManufacturer.getValue());
-        if (imageLoaded) {
-            Manager.currentProduct.setPhoto(ImageViewPhoto.getImage());
-        }
-        String number = TextFieldCost.getText();
-        number = number.replace(',', '.');
-        Manager.currentProduct.setCost(Double.parseDouble(number));
-        Manager.currentProduct.setDiscountAmount(Integer.parseInt(TextFieldDiscountAmount.getText()));
-        Manager.currentProduct.setMaxDiscountAmount(Integer.parseInt(TextFieldDiscountAmountMax.getText()));
-        Manager.currentProduct.setQuantityInStock(Integer.parseInt(TextFieldCountInStock.getText()));
-        if (Manager.currentProduct.getProductId() == null) {
-            Manager.currentProduct.setProductId(TextFieldArtikul.getText());
-            productService.save(Manager.currentProduct);
-            MessageBox("Информация", "", "Данные сохранены успешно", Alert.AlertType.INFORMATION);
-        } else {
-            productService.update(Manager.currentProduct);
-            MessageBox("Информация", "", "Данные обновлены успешно", Alert.AlertType.INFORMATION);
-        }
-    }
-
-    StringBuilder checkFields() {
-        StringBuilder error = new StringBuilder();
-        if (TextFieldArtikul.getText().isEmpty()) {
-            error.append("Укажите артикул товара\n");
-        }
-        if (TextFieldTitle.getText().isEmpty()) {
-            error.append("Укажите название товара\n");
-        }
-        if (TextFieldCost.getText().isEmpty()) {
-            error.append("Укажите стоимость товара\n");
-        }
-        if (ComboBoxCategory.getValue() == null) {
-            error.append("Выберите категорию\n");
-        }
-        if (ComboBoxManufacturer.getValue() == null) {
-            error.append("Выберите производителя\n");
-        }
-        if (ComboBoxSupplier.getValue() == null) {
-            error.append("Выберите поставщика\n");
-        }
-        if (ComboBoxUnittype.getValue() == null) {
-            error.append("Выберите единицу измерения\n");
-        }
-
-        if (!IsInteger(TextFieldDiscountAmount.getText())) {
-            error.append("Действующая скидка должна быть целым числом в диапазоне от 0% до 100%\n");
-        }
-        if (IsInteger(TextFieldDiscountAmount.getText()) && (Integer.parseInt(TextFieldDiscountAmount.getText()) < 0 || Integer.parseInt(TextFieldDiscountAmount.getText()) > 100)) {
-            error.append("Действующая скидка должна быть целым числом в диапазоне от 0% до 100%\n");
-        }
-        if (!IsInteger(TextFieldDiscountAmountMax.getText())) {
-            error.append("Максимальная скидка должна быть целым числом в диапазоне от 0% до 100%\n");
-        }
-        if (IsInteger(TextFieldDiscountAmountMax.getText()) && (Integer.parseInt(TextFieldDiscountAmountMax.getText()) < 0 || Integer.parseInt(TextFieldDiscountAmountMax.getText()) > 100)) {
-            error.append("Максимальная скидка должна быть целым числом в диапазоне от 0% до 100%\n");
-        }
-        if (IsInteger(TextFieldDiscountAmountMax.getText()) && IsInteger(TextFieldDiscountAmount.getText())) {
-            int maxDiscount = Integer.parseInt(TextFieldDiscountAmountMax.getText());
-            int discount = Integer.parseInt(TextFieldDiscountAmount.getText());
-            if (discount > maxDiscount)
-                error.append("Действующая скидка не может быть больше максимальной\n");
-        }
-        if (!IsInteger(TextFieldCountInStock.getText())) {
-            error.append("Количество товара на складе должно быть целым числом\n");
-        }
-        if (IsInteger(TextFieldCountInStock.getText()) && Integer.parseInt(TextFieldCountInStock.getText()) < 0) {
-            error.append("Количество товара на складе должно быть положительным целым числом\n");
-        }
-
-        if (!IsDouble(TextFieldCost.getText())) {
-            error.append("Стоимость должна быть положительным числом\n");
-        }
-        if (IsDouble(TextFieldCost.getText()) && Double.parseDouble(TextFieldCost.getText().replace(',', '.')) < 0) {
-            error.append("Стоимость должна быть положительным числом\n");
-        }
-
-        return error;
-    }
-
-    boolean IsInteger(String number) {
-        if (number == null) {
-            return false;
-        }
-        try {
-            int d = Integer.parseInt(number);
-        } catch (NumberFormatException nfe) {
-            return false;
-        }
-        return true;
-    }
-
-    boolean IsDouble(String number) {
-        if (number == null) {
-            return false;
-        }
-        try {
-            number = number.replace(',', '.');
-            double d = Double.parseDouble(number);
-        } catch (NumberFormatException nfe) {
-            return false;
-        }
-        return true;
-    }
-
-}
-
 ```
 
-4. Из пакета util откройте файл Manager и замените код
-![img.png](Lesson4Images/img.png)
+> ⚠️ **Важно:** `@Table(name = "\"user\"")` — в PostgreSQL `user` — зарезервированное слово, поэтому имя таблицы нужно экранировать двойными кавычками. В Java-строке кавычки экранируются как `\"`.
 
-### Manager.java
+> 💡 Обратите внимание: `username` — это не `id`, а сам первичный ключ (строковый). Так устроена ваша БД.
+
+---
+
+## UserRepository и UserService
+
+### 5.1. UserRepository
+
+`src/main/java/com/example/shop/repository/UserRepository.java`:
+
 ```java
-package ru.demo.tradeapp.util;
+package com.example.shop.repository;
 
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.stage.Stage;
-import ru.demo.tradeapp.model.Product;
-import ru.demo.tradeapp.model.User;
+import com.example.shop.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-public class Manager {
-    public static User currentUser = null;
-    public static Stage mainStage;
-    public static Stage secondStage;
-    public static Stage currentStage;
-    public static Product currentProduct;
+@Repository
+public interface UserRepository extends JpaRepository<User, String> {
 
-    public static void ShowPopup() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Закрыть приложение");
-        alert.setHeaderText("Вы хотите выйти из приложения?");
-        alert.setContentText("Все несохраненные данные, будут утеряны");
-
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.get() == ButtonType.OK) {
-            Platform.exit();
-        }
-    }
-
-    public static void ShowErrorMessageBox(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Ошибка");
-        alert.setHeaderText(message);
-        alert.showAndWait();
-    }
-
-    public static void MessageBox(String title, String header, String message, Alert.AlertType alertType) {
-        Alert alert = new Alert(alertType);
-        alert.setTitle(title);
-        alert.setHeaderText(header);
-        alert.setContentText(message);
-        alert.showAndWait();
-
-    }
-
-    public static Optional<ButtonType> ShowConfirmPopup() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Удаление");
-        alert.setHeaderText("Вы действительно хотите удалить запись?");
-        alert.setContentText("Также будут удалены все зависимые от этой записи данные");
-        Optional<ButtonType> result = alert.showAndWait();
-        return result;
-    }
-}
-
-```
-
-5. Откройте файл module-info.java замените в нем код
-![img_1.png](Lesson4Images/img_1.png)
-### module-info.java
-```java
-module ru.trade.tradeapp {
-    requires javafx.controls;
-    requires javafx.fxml;
-    requires jakarta.persistence;
-    requires org.hibernate.orm.core;
-    requires java.naming;
-    requires java.desktop;
-    requires javafx.swing;
-    requires org.hibernate.validator;
-    requires org.postgresql.jdbc;
-    opens ru.demo.tradeapp to javafx.fxml;
-    opens ru.demo.tradeapp.model to org.hibernate.orm.core, javafx.base;
-    exports ru.demo.tradeapp;
-    exports ru.demo.tradeapp.controller;
-    opens ru.demo.tradeapp.controller to javafx.fxml;
-    opens ru.demo.tradeapp.util to org.hibernate.orm.core;
+    Optional<User> findByUsername(String username);
 }
 ```
 
-6. Откройте файл LoginController.java и замените в нем код
-### класс LoginController.java
+> 💡 **`findByUsername`** — Spring Data JPA сам сгенерирует реализацию по имени метода. Никакого SQL писать не нужно: `findBy<Поле>` → `SELECT * FROM user WHERE username = ?`.
+
+### 5.2. UserService
+
+`src/main/java/com/example/shop/service/UserService.java`:
+
 ```java
-package ru.demo.tradeapp.controller;
+package com.example.shop.service;
 
-import jakarta.persistence.Query;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.RowConstraints;
-import javafx.stage.Stage;
-import org.hibernate.Session;
-import ru.demo.tradeapp.TradeApp;
-import ru.demo.tradeapp.model.User;
-import ru.demo.tradeapp.util.HibernateSessionFactoryUtil;
-import ru.demo.tradeapp.util.MakeCaptcha;
-import ru.demo.tradeapp.util.Manager;
+import com.example.shop.entity.User;
+import com.example.shop.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
-import static ru.demo.tradeapp.util.Manager.ShowErrorMessageBox;
+@Service
+public class UserService {
 
-public class LoginController implements Initializable {
+    @Autowired
+    private UserRepository userRepository;
 
-    boolean isWrongCaptha;
-    boolean isShowCaptha;
-    String captchaCode;
-    int secondsLeft;
-    @FXML
-    RowConstraints ThirdRow;
-    @FXML
-    Button BtnRenewCaptcha;
-    @FXML
-    private Button BtnCancel;
-    @FXML
-    private Button BtnOk;
-    @FXML
-    private PasswordField PasswordField;
-    @FXML
-    private TextField TextFieldUsername;
-    @FXML
-    private TextField TextFieldCaptcha;
-    @FXML
-    private ImageView ImageViewCaptcha;
-
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        initController();
+    public List<User> findAll() {
+        return userRepository.findAll();
     }
 
-    @FXML
-    void BtnRenewCaptchaAction(ActionEvent event) {
-        generateCaptcha();
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 
-    @FXML
-    void BtnCancelAction(ActionEvent event) {
-        Manager.ShowPopup();
+    public User save(User user) {
+        return userRepository.save(user);
+    }
+}
+```
+
+---
+
+## BCrypt: почему нельзя хранить пароли в открытом виде
+
+> 💡 **Никогда** не храните пароли в открытом виде. Если БД утечёт, злоумышленник получит все пароли. Вместо этого хранят **хеш**.
+
+**Что такое хеш:**
+- Хеш-функция превращает строку (`qwerty123`) в непонятный набор символов (`$2a$10$N9qo8uLO...`).
+- Из хеша **невозможно** восстановить исходный пароль.
+- Но можно проверить: если хеш от введённого пароля совпадает с сохранённым — пароль верный.
+
+> 💡 **BCrypt** — специальный алгоритм хеширования, который:
+> 1. Медленный (защита от брутфорса).
+> 2. Использует «соль» — случайные данные, добавляемые к паролю. Это значит, что одинаковые пароли у разных пользователей дают **разные** хеши.
+
+**В чём проблема нашей БД:** в таблице `user` пароли хранятся в открытом виде (например, `'1'`, `'2'`). Для учебного проекта это ок, но в реальной жизни так нельзя.
+
+### 6.1. Что мы сделаем
+
+1. Добавим `PasswordEncoder` (BCrypt) в конфигурацию.
+2. При создании нового пользователя будем хешировать пароль.
+3. Для **уже существующих** пользователей из `ScriptWithData.sql` — закодируем пароли вручную через SQL.
+
+### 6.2. Генерация BCrypt-хеша
+
+Создайте временный класс `util/PasswordHashGenerator.java`:
+
+```java
+package com.example.shop.util;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+public class PasswordHashGenerator {
+    public static void main(String[] args) {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        System.out.println("Пароль 'demo': " + encoder.encode("demo"));
+        System.out.println("Пароль 'admin': " + encoder.encode("admin"));
+    }
+}
+```
+
+Запустите — получите что-то вроде:
+
+```
+Пароль 'demo': $2a$10$wH8Qx...
+Пароль 'admin': $2a$10$K7pMz...
+```
+
+### 6.3. Обновите пароли в БД
+
+В DBeaver выполните:
+
+```sql
+UPDATE "user" SET password = '$2a$10$...' WHERE username = 'maia';
+UPDATE "user" SET password = '$2a$10$...' WHERE username = 'damir';
+-- и так далее для всех пользователей
+```
+
+Или создайте SQL-скрипт со всеми хешами.
+
+> ⚠️ **Важно:** поле `password` в вашей БД — `varchar(50)`. BCrypt-хеш — 60 символов. Нужно **расширить поле**:
+> ```sql
+> ALTER TABLE "user" ALTER COLUMN password TYPE varchar(100);
+> ```
+
+После этого удалите `PasswordHashGenerator.java` — он нужен был только один раз.
+
+---
+
+## Конфигурация SecurityConfig
+
+Создайте `src/main/java/com/example/shop/config/SecurityConfig.java`:
+
+```java
+package com.example.shop.config;
+
+import com.example.shop.entity.User;
+import com.example.shop.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    /**
+     * Шифрование паролей через BCrypt.
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
-    @FXML
-    void BtnOkActon(ActionEvent event) {
-        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
-            Query query = session.createQuery("from User", User.class);
-            List<User> users = query.getResultList();
-            Optional<User> person = users.stream().filter(user -> user.getUsername().equals(TextFieldUsername.getText()) &&
-                    user.getPassword().equals(PasswordField.getText())).findFirst();
+    /**
+     * Как Spring ищет пользователя по логину.
+     */
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> {
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден: " + username));
 
-            if (person.isEmpty() && isShowCaptha && !TextFieldCaptcha.getText().equals(captchaCode)) {
-                System.out.println("Bad error");
-                ShowErrorMessageBox("Не верный логин, пароль или текст капчи");
-                blockButtons();
-                return;
-            }
-            if (person.isEmpty() && (!isShowCaptha)) {
-                System.out.println("Bad error");
-                generateCaptcha();
-                isShowCaptha = true;
-                ThirdRow.setPrefHeight(50);
-                ImageViewCaptcha.setVisible(true);
-                TextFieldCaptcha.setVisible(true);
-                BtnRenewCaptcha.setVisible(true);
-                ShowErrorMessageBox("Не верный логин или пароль");
-                return;
-            }
-            if (person.isPresent() && isShowCaptha && !TextFieldCaptcha.getText().equals(captchaCode)) {
-                blockButtons();
-                ShowErrorMessageBox("Не верный логин, пароль или текст капчи");
-                return;
-            }
-
-            if (person.isPresent() && isShowCaptha && TextFieldCaptcha.getText().equals(captchaCode)) {
-                showMainWindow(person.get());
-                return;
-            }
-
-            if (person.isPresent() && !isShowCaptha) {
-                showMainWindow(person.get());
-            }
-        }
-    }
-
-    public void generateCaptcha() {
-        try {
-            ImageViewCaptcha.setImage(MakeCaptcha.CreateImage(150, 40, 4));
-            captchaCode = MakeCaptcha.captchaCode();
-            System.out.println(captchaCode);
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-
-    public void showMainWindow(User person) {
-        Manager.currentUser = person;
-        System.out.println(Manager.currentUser);
-        Manager.mainStage.hide();
-        Stage newWindow = new Stage();
-        FXMLLoader fxmlLoader = new FXMLLoader(TradeApp.class.getResource("main-view.fxml"));
-
-        Scene scene = null;
-        try {
-            scene = new Scene(fxmlLoader.load());
-            scene.getStylesheets().add("base-styles.css");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        newWindow.setTitle("Вы вошли как " + Manager.currentUser.getFirstName());
-        newWindow.setScene(scene);
-        newWindow.setOnCloseRequest(e -> {
-            Manager.mainStage.show();
-        });
-        Manager.secondStage = newWindow;
-
-        newWindow.show();
-    }
-
-    public void initTimer() {
-        TimerTask task = new TimerTask() {
-            public void run() {
-                System.out.println("Task performed on: " + new Date() + "n" +
-                        "Thread's name: " + Thread.currentThread().getName());
-                secondsLeft--;
-                if (secondsLeft == 0) ;
-                {
-                    BtnOk.setDisable(false);
-                    BtnCancel.setDisable(false);
-                    this.cancel();
-                }
-            }
+            return org.springframework.security.core.userdetails.User
+                    .withUsername(user.getUsername())
+                    .password(user.getPassword())
+                    .roles(user.getRole() != null ? user.getRole().getTitle() : "CLIENT")
+                    .build();
         };
-        Timer timer = new Timer("Timer");
-
-        long delay = 10000L;
-        timer.schedule(task, delay);
     }
 
-    public void blockButtons() {
-        initTimer();
-        secondsLeft = 10;
-        BtnOk.setDisable(true);
-        BtnCancel.setDisable(true);
-    }
-
-    public void initController() {
-        ThirdRow.setPrefHeight(0);
-        TextFieldUsername.setText("maia");
-        PasswordField.setText("1");
-        TextFieldCaptcha.setVisible(false);
-        BtnRenewCaptcha.setVisible(false);
-        ImageViewCaptcha.setVisible(false);
-        isWrongCaptha = false;
-        isShowCaptha = false;
-        captchaCode = "";
-        secondsLeft = 0;
+    /**
+     * Правила доступа к URL.
+     */
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/", "/products-page", "/products-jpa-page",
+                                         "/categories", "/products-jpa").permitAll()
+                        .requestMatchers("/admin/**").hasAnyRole("Админист", "Менеджер")
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/products-jpa-page", true)
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/products-jpa-page")
+                        .permitAll()
+                );
+        return http.build();
     }
 }
 ```
 
+### 7.1. Разбор конфигурации
 
-# Запуск приложения
-1. Запуcтите приложение. Введите учетные данные, например логин: ```maia``` , пароль: ```1```.
-![img_2.png](Lesson4Images/img_2.png)
-2. Просмотрите работу приложения.
-![img_3.png](Lesson4Images/img_3.png)
+| Часть | Что делает |
+|-------|-----------|
+| `@Configuration` | Помечает класс как источник настроек |
+| `@EnableWebSecurity` | Активирует Spring Security |
+| `passwordEncoder()` | Создаёт бин BCrypt для кодирования/проверки паролей |
+| `userDetailsService()` | Определяет, как искать пользователя по логину |
+| `filterChain()` | Основные правила: что защищено, что открыто, куда редиректить |
+| `.permitAll()` | Разрешить всем (в том числе анонимам) |
+| `.hasAnyRole(...)` | Разрешить только с ролями |
+| `.anyRequest().authenticated()` | Всё остальное — только после логина |
 
+> ⚠️ **Роли в вашей БД:** `"Админист"`, `"Менеджер"`, `"Клиент"`. Spring Security по умолчанию ожидает роли в виде `ROLE_XXX`. Метод `.roles("Админист")` сам добавит префикс `ROLE_` — не добавляйте его вручную.
 
-# Задания
-1. Доработайте функционал:
-   * Добавьте при выводе таблицы дополнительные поля: Цену без скидки, производителя и категорию товара.
-   * Задайте окнам ограничения на минимальный размер
-   * Добавьте стили к новым элементам.
-2. На основе макета CRUD с товарами создайте формы для просмотра, добавления, удаления и редактирования следуюущих сущностей:
-   * Category
-   * Supplier
-   * Manufacturer
-   * Unittype
-   * User
+### 7.2. Почему `/login` — кастомная страница
 
-   
+Spring Security по умолчанию предоставляет свою страницу входа. Она некрасивая. Мы сделаем свою, а Spring будет обрабатывать POST `/login` сам.
 
+---
 
-Предыдущее занятие | &nbsp; | Следующее занятие
-:----------------:|:----------:|:----------------:
-[Урок 3](Lesson3.md) | [Содержание](readme.md) | [Урок 5](Lesson5.md)
+## Страница входа
+
+Создайте `src/main/java/com/example/shop/controller/LoginController.java`:
+
+```java
+package com.example.shop.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class LoginController {
+
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login";
+    }
+}
+```
+
+Создайте `src/main/resources/templates/login.html`:
+
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center;
+               align-items: center; height: 100vh; margin: 0; background: #f4f4f4; }
+        .login-box { background: white; padding: 30px; border-radius: 8px;
+                     box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 320px; }
+        h1 { margin-top: 0; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #007bff; color: white;
+                 border: none; cursor: pointer; border-radius: 4px; }
+        .error { color: red; text-align: center; margin-bottom: 15px; }
+        .success { color: green; text-align: center; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>Вход</h1>
+
+        <div class="error" th:if="${param.error}">Неверный логин или пароль</div>
+        <div class="success" th:if="${param.logout}">Вы вышли из системы</div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" name="username" required autofocus/>
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" name="password" required/>
+            </div>
+            <button type="submit">Войти</button>
+        </form>
+    </div>
+</body>
+</html>
+```
+
+> ⚠️ **Имена полей обязательны:** `username` и `password`. Spring Security ищет именно их в POST-запросе. Если переименовать — аутентификация не сработает.
+
+---
+
+## Кнопка выхода
+
+Добавьте в `templates/products-jpa.html` (или в общий фрагмент) блок:
+
+```html
+<div style="text-align:right; margin-bottom: 20px;">
+    <span th:if="${#authorization.expression('isAuthenticated()')}">
+        Вы вошли как: <b th:text="${#authentication.name}">guest</b>
+        <form th:action="@{/logout}" method="post" style="display:inline; margin-left:10px;">
+            <button type="submit">Выйти</button>
+        </form>
+    </span>
+    <a th:if="${!#authorization.expression('isAuthenticated()')}" th:href="@{/login}">Войти</a>
+</div>
+```
+
+> 💡 **`#authentication.name`** — встроенный объект Thymeleaf, содержит логин текущего пользователя.
+> **`#authorization.expression('isAuthenticated()')`** — проверяет, залогинен ли пользователь.
+
+> ⚠️ Logout должен быть POST, а не GET — это требование Spring Security по умолчанию.
+
+---
+
+## Ограничение доступа по ролям
+
+Теперь `/admin/**` защищён. Попробуйте:
+
+1. Выйдите из системы (если залогинены).
+2. Откройте `http://localhost:8080/admin/products/new`.
+3. Вас перекинет на `/login`.
+4. Войдите как `maia` (роль Клиент) — вернётся **403 Forbidden**.
+5. Войдите как `damir` (роль Админист) — форма откроется.
+
+> 💡 **Проверка роли в шаблонах.** Если нужно скрыть кнопку «Удалить» от не-админов:
+>
+> ```html
+> <form th:if="${#authorization.expression('hasRole(''Админист'')')}"
+>       th:action="@{/admin/products/delete/{id}(id=${p.id})}" method="post">
+>     <button type="submit">Удалить</button>
+> </form>
+> ```
+
+---
+
+## SecurityUtils в пакете util
+
+> 💡 Если вам часто нужно получать текущего пользователя в коде — вынесите это в утилиту.
+
+`src/main/java/com/example/shop/util/SecurityUtils.java`:
+
+```java
+package com.example.shop.util;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+public final class SecurityUtils {
+
+    private SecurityUtils() {
+    }
+
+    /**
+     * Возвращает логин текущего пользователя или null, если аноним.
+     */
+    public static String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()
+                || "anonymousUser".equals(auth.getPrincipal())) {
+            return null;
+        }
+        return auth.getName();
+    }
+
+    /**
+     * Проверяет, что текущий пользователь имеет указанную роль.
+     */
+    public static boolean hasRole(String role) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            return false;
+        }
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + role));
+    }
+
+    /**
+     * Проверяет, что пользователь залогинен.
+     */
+    public static boolean isAuthenticated() {
+        return getCurrentUsername() != null;
+    }
+}
+```
+
+**Использование в Service:**
+
+```java
+import com.example.shop.util.SecurityUtils;
+
+@Transactional
+public Product createFromForm(ProductForm form) {
+    if (!SecurityUtils.hasRole("Админист")) {
+        throw new SecurityException("Только администратор может создавать товары");
+    }
+    // ...
+}
+```
+
+**Использование в Controller:**
+
+```java
+@GetMapping("/my-profile")
+public String myProfile(Model model) {
+    String username = SecurityUtils.getCurrentUsername();
+    if (username == null) {
+        return "redirect:/login";
+    }
+    model.addAttribute("user", userService.findByUsername(username).orElseThrow());
+    return "profile";
+}
+```
+
+---
+
+## Проверка
+
+### 12.1. Чек-лист
+
+| # | Проверка | ✅ |
+|---|----------|---|
+| 1 | Entity `User` и `Role` созданы | |
+| 2 | `UserRepository.findByUsername` работает | |
+| 3 | BCrypt-хеши сгенерированы и проставлены в БД | |
+| 4 | `SecurityConfig` компилируется | |
+| 5 | Страница `/login` открывается | |
+| 6 | Вход под `damir` (Админист) работает | |
+| 7 | Вход под `maia` (Клиент) — редирект на 403 при `/admin/**` | |
+| 8 | Кнопка «Выйти» работает | |
+| 9 | На странице видно имя текущего пользователя | |
+| 10 | Незалогиненный пользователь не может зайти в `/admin/**` | |
+
+### 12.2. Сценарий для проверки
+
+1. Откройте `/admin/products/new` без логина → редирект на `/login`.
+2. Войдите как `maia` (Клиент) → 403.
+3. Войдите как `damir` (Админист) → форма открывается.
+4. Создайте товар.
+5. Нажмите «Выйти» → редирект на `/products-jpa-page`.
+
+---
+
+## Задание
+
+1. **Создайте страницу регистрации `/register`**:
+   - DTO `RegistrationForm` с полями: `username`, `password`, `firstName`, `secondName`, `email`.
+   - Валидация: логин ≥ 4 символов, пароль ≥ 6, email корректный.
+   - При регистрации пароль хешируется через `PasswordEncoder`.
+   - Новому пользователю присваивается роль `Клиент`.
+   - Откройте `/register` всем (без аутентификации).
+
+2. **Добавьте страницу профиля `/profile`**:
+   - Показывает данные текущего пользователя.
+   - Доступна только залогиненным.
+   - Использует `SecurityUtils.getCurrentUsername()`.
+
+3. **Создайте `util/DateUtils.java`**:
+   - `format(LocalDate)` — в вид `дд.мм.гггг`.
+   - `parse(String)` — из строки в `LocalDate`.
+   - Используйте в профиле для отображения даты регистрации (если добавите поле).
+
+4. **Скройте кнопки «Редактировать» и «Удалить»** в `products-jpa.html` для не-админов:
+   - `th:if="${#authorization.expression('hasRole(''Админист'')')}"`.
+
+5. **Создайте `CategoryAdminController`** с ролями:
+   - Только `Админист` может создавать/удалять категории.
+   - `Менеджер` может только просматривать.
+
+6. **Загрузите результат на Gogs** в репозиторий `Lesson1`.
+
+---
+
+| Предыдущее занятие | &nbsp; | Следующее занятие |
+|:----------------:|:----------:|:----------------:|
+| [В начало](readme.md) | [Содержание](readme.md) | [Урок 5](Lesson5.md) |
+
+---
+
+## 💡 Что дальше (анонс урока 5)
+
+На следующем занятии:
+- Добавим **навигационное меню** через **Thymeleaf Fragments** (общий шаблон).
+- Сделаем **главную страницу** с популярными товарами.
+- Добавим **каталог** с фильтрацией по категориям.
+- Реализуем **карточку товара** с фотографией.
+- Введём **пагинацию** для больших списков.
