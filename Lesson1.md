@@ -288,6 +288,7 @@
 
 4. Нажмите **Generate** → распакуйте архив в `C:\projects\shop`.
 5. В IntelliJ: **File → Open** → выберите папку `shop` → дождитесь загрузки Maven.
+6. ЕСЛИ не получилось сделать самому скачайте вот этот архив [shop](shop.zip).
 
 ### 5.3. Настройка `application.properties`
 
